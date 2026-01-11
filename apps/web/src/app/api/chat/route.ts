@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { chatService } from "@/lib/services";
 import { auth } from "@/lib/auth";
 
+export const runtime = "nodejs";
+
 function asNonEmptyString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -25,21 +27,41 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as
     | {
+        id?: unknown;
         conversationId?: unknown;
         content?: unknown;
+        text?: unknown;
         model?: unknown;
         messages?: unknown;
       }
     | null;
 
-  const conversationId = asNonEmptyString(body?.conversationId);
+  const conversationId =
+    asNonEmptyString(body?.conversationId) ?? asNonEmptyString(body?.id);
   const contentFromBody = asNonEmptyString(body?.content);
+  const textFromBody = asNonEmptyString(body?.text);
 
   const messages = Array.isArray(body?.messages) ? (body?.messages as Array<any>) : null;
-  const contentFromMessages =
-    messages && messages.length > 0 ? asNonEmptyString(messages[messages.length - 1]?.content) : null;
+  const contentFromMessages = (() => {
+    if (!messages || messages.length === 0) return null;
+    const last = messages[messages.length - 1] as any;
 
-  const content = contentFromBody ?? contentFromMessages;
+    const direct = asNonEmptyString(last?.content);
+    if (direct) return direct;
+
+    const parts = Array.isArray(last?.parts) ? (last.parts as Array<any>) : null;
+    if (!parts || parts.length === 0) return null;
+
+    const text = parts
+      .filter((p) => p && p.type === "text")
+      .map((p) => asNonEmptyString(p.text) ?? "")
+      .join("")
+      .trim();
+
+    return text.length > 0 ? text : null;
+  })();
+
+  const content = contentFromBody ?? textFromBody ?? contentFromMessages;
 
   const modelId =
     asNonEmptyString(body?.model) ??

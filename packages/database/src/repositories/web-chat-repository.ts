@@ -131,6 +131,11 @@ export class WebChatRepository implements IChatRepository {
       throw new Error("WebChatRepository: failed to add message");
     }
 
+    await this.db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(and(eq(conversations.id, input.conversationId), eq(conversations.userId, userId)));
+
     return {
       id: row.id,
       conversationId: row.conversationId,

@@ -14,6 +14,7 @@ import { conversations, folders, messages } from "../desktop/schema";
 type DesktopDb = {
   insert: (table: unknown) => any;
   select: (...args: any[]) => any;
+  update: (table: unknown) => any;
 };
 
 export class DesktopChatRepository implements IChatRepository {
@@ -148,6 +149,11 @@ export class DesktopChatRepository implements IChatRepository {
       content: input.content,
       createdAt: now,
     });
+
+    await this.db
+      .update(conversations)
+      .set({ updatedAt: now })
+      .where(eq(conversations.id, input.conversationId));
 
     const rows = await this.db.select().from(messages).where(eq(messages.id, input.id)).limit(1);
     const row = rows[0];

@@ -23,3 +23,12 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
+
+.markdown .hljs {
+  background: transparent;
+}
+
+.markdown pre code {
+  display: block;
+  white-space: pre;
+}
