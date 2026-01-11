@@ -6,9 +6,11 @@
   "dependencies": {
     "@prismax/shared": "workspace:*"
   },
+  "devDependencies": {
+    "typescript": "^5"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "type-check": "tsc -p tsconfig.json --noEmit"
   }
 }
-
