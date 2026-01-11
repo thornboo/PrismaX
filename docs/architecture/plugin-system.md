@@ -52,7 +52,7 @@ The plugin system allows third-party developers to extend PrismaX functionality,
   "description": "Search the web using various search engines",
   "author": "PrismaX Team",
   "homepage": "https://github.com/prismax/plugin-web-search",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "dist/index.js",
   "prismax": {
     "minVersion": "1.0.0",
