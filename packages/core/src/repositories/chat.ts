@@ -41,10 +41,9 @@ export interface IChatRepository {
   listFolders(input?: { userId?: string; parentId?: string | null }): Promise<Folder[]>;
 
   createConversation(input: CreateConversationInput): Promise<Conversation>;
-  getConversation(id: string): Promise<Conversation | null>;
-  listConversations(input?: { userId?: string; folderId?: string | null }): Promise<Conversation[]>;
+  getConversation(input: { id: string; userId?: string }): Promise<Conversation | null>;
+  getConversations(input?: { userId?: string; folderId?: string | null }): Promise<Conversation[]>;
 
-  addMessage(input: CreateMessageInput): Promise<Message>;
-  listMessages(conversationId: string): Promise<Message[]>;
+  addMessage(input: CreateMessageInput & { userId?: string }): Promise<Message>;
+  getMessages(input: { conversationId: string; userId?: string }): Promise<Message[]>;
 }
-

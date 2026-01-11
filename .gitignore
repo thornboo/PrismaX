@@ -1,41 +1,140 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-node_modules
-/.pnp
+# =============================================================================
+# Dependencies
+# =============================================================================
+node_modules/
+.pnp
 .pnp.js
+.pnpm-store/
 
-# testing
-/coverage
+# =============================================================================
+# Build outputs
+# =============================================================================
+# Next.js
+.next/
+out/
 
-# next.js
-/.next/
-/out/
+# Production build
+build/
+dist/
 
-# production
-/build
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
-.DS_Store
+# tsup (Electron main process)
+electron-dist/
+
+# =============================================================================
+# Electron / Desktop
+# =============================================================================
+# Electron builder output
+release/
+*.dmg
+*.exe
+*.AppImage
+*.snap
+*.deb
+*.rpm
+*.msi
+
+# Native modules rebuild
+.electron-rebuild/
+
+# =============================================================================
+# Database
+# =============================================================================
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Drizzle
+drizzle/meta/
+
+# PostgreSQL dumps
+*.sql.gz
+*.dump
+
+# =============================================================================
+# Testing
+# =============================================================================
+coverage/
+.nyc_output/
+
+# Playwright
+playwright-report/
+playwright/.cache/
+test-results/
+
+# =============================================================================
+# Environment & Secrets
+# =============================================================================
+.env
+.env.*
+!.env.example
+!.env.template
 *.pem
+*.key
+*.crt
 
-# debug
+# =============================================================================
+# IDE & Editors
+# =============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# =============================================================================
+# OS Generated
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# =============================================================================
+# Logs & Debug
+# =============================================================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
 
-# local env files
-.env*.local
-.env
+# =============================================================================
+# Turborepo
+# =============================================================================
+.turbo/
 
-# vercel
-.vercel
+# =============================================================================
+# Vercel
+# =============================================================================
+.vercel/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-.spec-workflow
+# =============================================================================
+# Misc
+# =============================================================================
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Local development notes
 .notes/
-.turbo
-.idea
-.pnpm-store/
+.spec-workflow/
+
+# Lock files (keep only pnpm-lock.yaml)
+package-lock.json
+yarn.lock
