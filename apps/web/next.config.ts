@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ["@prismax/database"],
+  transpilePackages: ["@prismax/core", "@prismax/ai-sdk", "@prismax/database"],
 };
 
 export default nextConfig;

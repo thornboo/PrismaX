@@ -8,13 +8,13 @@ import type {
   Message,
 } from "@prismax/core";
 import { and, asc, eq } from "drizzle-orm";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { conversations, messages } from "../web/schema";
 
-type WebDb = {
-  insert: (table: unknown) => any;
-  select: (...args: any[]) => any;
-};
+import type * as WebSchema from "../web/schema";
+
+type WebDb = PostgresJsDatabase<typeof WebSchema>;
 
 function requireUserId(userId: string | undefined): string {
   if (typeof userId !== "string" || userId.trim().length === 0) {

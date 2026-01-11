@@ -54,7 +54,11 @@ export function ChatClient({ conversationId, initialMessages }: ChatClientProps)
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ conversationId, content }),
+        body: JSON.stringify({
+          conversationId,
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content }],
+        }),
       });
 
       if (!response.ok) {
@@ -136,4 +140,3 @@ export function ChatClient({ conversationId, initialMessages }: ChatClientProps)
     </div>
   );
 }
-

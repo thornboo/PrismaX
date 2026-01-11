@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@prismax/core": "workspace:*",
+    "@prismax/ai-sdk": "workspace:*",
     "@prismax/database": "workspace:*",
     "@prismax/shared": "workspace:*",
     "better-auth": "^1.3.4",
