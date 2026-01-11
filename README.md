@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+[English](./README.md) | [简体中文](./docs/zh/README.md)
 
 ## Features
 

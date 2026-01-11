@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+[English](../../README.md) | [简体中文](./README.md)
 
 ## 特性
 
@@ -38,13 +38,13 @@
 
 ## 文档
 
-详细文档请查看 [docs/](./docs/) 目录：
+详细文档请查看 [docs/](../) 目录：
 
-- [项目概述](./docs/项目概述.md)
-- [技术选型](./docs/技术选型/)
-- [架构设计](./docs/架构设计/)
-- [功能规划](./docs/功能规划/)
-- [开发指南](./docs/开发指南/)
+- [项目概述](../项目概述.md)
+- [技术选型](../技术选型/)
+- [架构设计](../架构设计/)
+- [功能规划](../功能规划/)
+- [开发指南](../开发指南/)
 
 ## 快速开始
 
@@ -63,8 +63,8 @@ pnpm dev
 
 ## 贡献指南
 
-欢迎贡献代码！请查看 [贡献指南](./CONTRIBUTING.md) 了解详情。
+欢迎贡献代码！请查看 [贡献指南](../../CONTRIBUTING.md) 了解详情。
 
 ## 许可证
 
-[MIT](./LICENSE)
+[MIT](../../LICENSE)
