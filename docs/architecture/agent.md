@@ -1,32 +1,33 @@
-# Agent 架构设计
+# Agent Architecture Design
 
-> 本文档描述 PrismaX 的 Agent 系统架构设计
-
----
-
-## 概述
-
-Agent 系统是 PrismaX 的核心能力之一，允许 AI 模型调用工具、执行任务、与外部系统交互。
+> This document describes the PrismaX Agent system architecture design
 
 ---
 
-## Agent 架构
+## Overview
+
+The Agent system is one of PrismaX's core capabilities, allowing AI models to call tools, execute tasks, and interact with external systems.
+
+---
+
+## Agent Architecture
 
 ```
 +-------------------------------------------------------------------------+
-|                           Agent 运行时                                   |
+|                           Agent Runtime                                  |
 +-------------------------------------------------------------------------+
 |                                                                         |
 |  +-------------------+     +-------------------+     +-------------------+
-|  |   任务规划器       |     |   工具执行器       |     |   状态管理器      |
-|  |   (Planner)       |     |   (Executor)      |     |   (StateManager) |
+|  |  Task Planner     |     |  Tool Executor    |     |  State Manager    |
+|  |                   |     |                   |     |                   |
 |  +-------------------+     +-------------------+     +-------------------+
 |           |                        |                        |           |
 |           v                        v                        v           |
 |  +-------------------------------------------------------------------+  |
-|  |                         工具注册表                                  |  |
+|  |                         Tool Registry                             |  |
 |  |  +-------------+  +-------------+  +-------------+  +-------------+ |
-|  |  | 内置工具     |  | 插件工具    |  | MCP 工具    |  | 自定义工具   | |
+|  |  | Built-in    |  | Plugin      |  | MCP Tools   |  | Custom      | |
+|  |  | Tools       |  | Tools       |  |             |  | Tools       | |
 |  |  +-------------+  +-------------+  +-------------+  +-------------+ |
 |  +-------------------------------------------------------------------+  |
 |                                                                         |
@@ -35,9 +36,9 @@ Agent 系统是 PrismaX 的核心能力之一，允许 AI 模型调用工具、�
 
 ---
 
-## 核心组件
+## Core Components
 
-### 1. Agent 运行时
+### 1. Agent Runtime
 
 ```typescript
 // agent/runtime.ts
@@ -59,7 +60,7 @@ class AgentRuntime {
     this.stateManager.createSession(sessionId);
 
     try {
-      // 1. 初始化上下文
+      // 1. Initialize context
       const context: AgentContext = {
         sessionId,
         messages: input.messages,
@@ -67,15 +68,15 @@ class AgentRuntime {
         maxIterations: input.maxIterations || 10,
       };
 
-      // 2. 执行循环
+      // 2. Execution loop
       let iteration = 0;
       while (iteration < context.maxIterations) {
         iteration++;
 
-        // 3. 规划下一步
+        // 3. Plan next step
         const plan = await this.planner.plan(context);
 
-        // 4. 检查是否完成
+        // 4. Check if complete
         if (plan.type === 'final_answer') {
           return {
             success: true,
@@ -84,11 +85,11 @@ class AgentRuntime {
           };
         }
 
-        // 5. 执行工具调用
+        // 5. Execute tool call
         if (plan.type === 'tool_call') {
           const result = await this.executor.execute(plan.toolCall);
 
-          // 6. 更新状态
+          // 6. Update state
           this.stateManager.addStep(sessionId, {
             type: 'tool_call',
             tool: plan.toolCall.name,
@@ -96,7 +97,7 @@ class AgentRuntime {
             output: result,
           });
 
-          // 7. 更新上下文
+          // 7. Update context
           context.messages.push({
             role: 'assistant',
             content: null,
@@ -110,7 +111,7 @@ class AgentRuntime {
         }
       }
 
-      // 达到最大迭代次数
+      // Max iterations reached
       return {
         success: false,
         error: 'Max iterations reached',
@@ -123,7 +124,7 @@ class AgentRuntime {
 }
 ```
 
-### 2. 任务规划器
+### 2. Task Planner
 
 ```typescript
 // agent/planner.ts
@@ -135,10 +136,10 @@ class Planner {
   }
 
   async plan(context: AgentContext): Promise<PlanResult> {
-    // 构建系统提示
+    // Build system prompt
     const systemPrompt = this.buildSystemPrompt(context.tools);
 
-    // 调用模型
+    // Call model
     const response = await this.model.chat([
       { role: 'system', content: systemPrompt },
       ...context.messages,
@@ -147,7 +148,7 @@ class Planner {
       tool_choice: 'auto',
     });
 
-    // 解析响应
+    // Parse response
     if (response.tool_calls?.length) {
       return {
         type: 'tool_call',
@@ -184,7 +185,7 @@ Think step by step and explain your reasoning.`;
 }
 ```
 
-### 3. 工具执行器
+### 3. Tool Executor
 
 ```typescript
 // agent/executor.ts
@@ -203,16 +204,16 @@ class ToolExecutor {
     }
 
     try {
-      // 解析参数
+      // Parse arguments
       const args = JSON.parse(toolCall.arguments);
 
-      // 验证参数
+      // Validate arguments
       const validation = this.validateArgs(tool, args);
       if (!validation.valid) {
         return JSON.stringify({ error: validation.error });
       }
 
-      // 执行工具（带超时）
+      // Execute tool (with timeout)
       const result = await Promise.race([
         tool.execute(args),
         this.createTimeout(tool.timeout || this.timeout),
@@ -227,7 +228,7 @@ class ToolExecutor {
   }
 
   private validateArgs(tool: Tool, args: unknown): ValidationResult {
-    // 使用 JSON Schema 验证
+    // Use JSON Schema validation
     const ajv = new Ajv();
     const validate = ajv.compile(tool.parameters);
 
@@ -249,7 +250,7 @@ class ToolExecutor {
 }
 ```
 
-### 4. 状态管理器
+### 4. State Manager
 
 ```typescript
 // agent/state.ts
@@ -303,7 +304,7 @@ class StateManager {
         `agent:session:${session.id}`,
         JSON.stringify(session),
         'EX',
-        3600 // 1 小时过期
+        3600 // 1 hour expiry
       );
     }
   }
@@ -312,38 +313,38 @@ class StateManager {
 
 ---
 
-## 工具系统
+## Tool System
 
-### 工具定义
+### Tool Definition
 
 ```typescript
 interface Tool {
-  // 工具名称
+  // Tool name
   name: string;
 
-  // 工具描述
+  // Tool description
   description: string;
 
-  // 参数定义（JSON Schema）
+  // Parameter definition (JSON Schema)
   parameters: JSONSchema;
 
-  // 执行函数
+  // Execute function
   execute: (args: unknown) => Promise<unknown>;
 
-  // 是否需要确认
+  // Requires confirmation
   requireConfirmation?: boolean;
 
-  // 超时时间
+  // Timeout
   timeout?: number;
 
-  // 权限要求
+  // Permission requirements
   permissions?: string[];
 }
 ```
 
-### 内置工具
+### Built-in Tools
 
-#### Web 搜索
+#### Web Search
 
 ```typescript
 const webSearchTool: Tool = {
@@ -375,7 +376,7 @@ const webSearchTool: Tool = {
 };
 ```
 
-#### URL 抓取
+#### URL Fetch
 
 ```typescript
 const urlFetchTool: Tool = {
@@ -400,7 +401,7 @@ const urlFetchTool: Tool = {
 };
 ```
 
-#### 代码执行
+#### Code Interpreter
 
 ```typescript
 const codeInterpreterTool: Tool = {
@@ -429,7 +430,7 @@ const codeInterpreterTool: Tool = {
 };
 ```
 
-#### 文件操作
+#### File Operations
 
 ```typescript
 const fileReadTool: Tool = {
@@ -455,9 +456,9 @@ const fileReadTool: Tool = {
 
 ---
 
-## MCP 协议支持
+## MCP Protocol Support
 
-### MCP 客户端
+### MCP Client
 
 ```typescript
 // mcp/client.ts
@@ -466,10 +467,10 @@ class MCPClient {
   private tools: Map<string, MCPTool> = new Map();
 
   async connect(serverConfig: MCPServerConfig): Promise<void> {
-    // 建立连接
+    // Establish connection
     this.transport = await createTransport(serverConfig);
 
-    // 获取工具列表
+    // Get tool list
     const response = await this.transport.request('tools/list', {});
     for (const tool of response.tools) {
       this.tools.set(tool.name, tool);
@@ -499,7 +500,7 @@ class MCPClient {
 }
 ```
 
-### MCP 服务端
+### MCP Server
 
 ```typescript
 // mcp/server.ts
@@ -538,26 +539,26 @@ class MCPServer {
 
 ---
 
-## Agent 模式
+## Agent Modes
 
-### ReAct 模式
+### ReAct Mode
 
 ```
-Thought: 我需要搜索最新的信息
+Thought: I need to search for the latest information
 Action: web_search
 Action Input: {"query": "latest news"}
-Observation: [搜索结果]
-Thought: 我找到了相关信息，现在可以回答
-Final Answer: 根据搜索结果...
+Observation: [Search results]
+Thought: I found relevant information, now I can answer
+Final Answer: Based on the search results...
 ```
 
-### Plan-and-Execute 模式
+### Plan-and-Execute Mode
 
 ```
 Plan:
-1. 搜索相关信息
-2. 分析搜索结果
-3. 总结并回答
+1. Search for relevant information
+2. Analyze search results
+3. Summarize and answer
 
 Execute Step 1: web_search(...)
 Execute Step 2: analyze(...)
@@ -566,7 +567,7 @@ Execute Step 3: summarize(...)
 Final Answer: ...
 ```
 
-### 实现
+### Implementation
 
 ```typescript
 // agent/modes/react.ts
@@ -591,23 +592,23 @@ ${this.formatTools()}`;
 // agent/modes/plan-execute.ts
 class PlanExecuteAgent extends AgentRuntime {
   async run(input: AgentInput): Promise<AgentOutput> {
-    // 1. 生成计划
+    // 1. Generate plan
     const plan = await this.generatePlan(input);
 
-    // 2. 执行每个步骤
+    // 2. Execute each step
     const results: StepResult[] = [];
     for (const step of plan.steps) {
       const result = await this.executeStep(step);
       results.push(result);
 
-      // 检查是否需要重新规划
+      // Check if replanning needed
       if (result.needsReplan) {
         const newPlan = await this.replan(plan, results);
         plan.steps = newPlan.steps;
       }
     }
 
-    // 3. 生成最终答案
+    // 3. Generate final answer
     return this.generateFinalAnswer(input, results);
   }
 }
@@ -615,19 +616,19 @@ class PlanExecuteAgent extends AgentRuntime {
 
 ---
 
-## 错误处理
+## Error Handling
 
-### 错误类型
+### Error Types
 
-| 错误类型 | 说明 | 处理方式 |
-|----------|------|----------|
-| ToolNotFound | 工具不存在 | 返回错误信息给模型 |
-| ToolExecutionError | 工具执行失败 | 重试或返回错误 |
-| ToolTimeout | 工具执行超时 | 终止执行，返回超时错误 |
-| MaxIterationsReached | 达到最大迭代次数 | 返回部分结果 |
-| PermissionDenied | 权限不足 | 请求用户授权 |
+| Error Type | Description | Handling |
+|------------|-------------|----------|
+| ToolNotFound | Tool doesn't exist | Return error message to model |
+| ToolExecutionError | Tool execution failed | Retry or return error |
+| ToolTimeout | Tool execution timeout | Terminate execution, return timeout error |
+| MaxIterationsReached | Max iterations reached | Return partial results |
+| PermissionDenied | Insufficient permissions | Request user authorization |
 
-### 重试策略
+### Retry Strategy
 
 ```typescript
 class RetryExecutor {
@@ -643,12 +644,12 @@ class RetryExecutor {
       } catch (error) {
         lastError = error as Error;
 
-        // 判断是否可重试
+        // Check if retryable
         if (!this.isRetryable(error)) {
           throw error;
         }
 
-        // 等待后重试
+        // Wait before retry
         await sleep(this.backoff[i]);
       }
     }
@@ -671,12 +672,12 @@ class RetryExecutor {
 
 ---
 
-## 安全考虑
+## Security Considerations
 
-### 工具权限
+### Tool Permissions
 
 ```typescript
-// 权限检查
+// Permission check
 async function checkToolPermission(
   tool: Tool,
   user: User
@@ -695,14 +696,14 @@ async function checkToolPermission(
 }
 ```
 
-### 用户确认
+### User Confirmation
 
 ```typescript
-// 需要确认的工具
+// Tools requiring confirmation
 if (tool.requireConfirmation) {
   const confirmed = await showConfirmDialog({
-    title: `确认执行 ${tool.name}`,
-    message: `即将执行以下操作：\n${JSON.stringify(args, null, 2)}`,
+    title: `Confirm execution of ${tool.name}`,
+    message: `About to execute:\n${JSON.stringify(args, null, 2)}`,
   });
 
   if (!confirmed) {
@@ -711,10 +712,10 @@ if (tool.requireConfirmation) {
 }
 ```
 
-### 资源限制
+### Resource Limits
 
 ```typescript
-// 限制并发执行
+// Limit concurrent execution
 const semaphore = new Semaphore(5);
 
 async function executeWithLimit(tool: Tool, args: unknown) {

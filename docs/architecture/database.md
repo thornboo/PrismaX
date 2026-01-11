@@ -1,25 +1,25 @@
-# 数据库设计
+# Database Design
 
-> 本文档描述 PrismaX 的数据库 Schema 设计
-
----
-
-## 数据库选型
-
-| 场景 | 数据库 | 说明 |
-|------|--------|------|
-| Web 版 | PostgreSQL + pgvector | 向量搜索支持 |
-| 桌面版 | SQLite | 轻量级本地存储 |
-| 缓存 | Redis | Agent 状态、会话缓存 |
+> This document describes the PrismaX database schema design
 
 ---
 
-## Web 版数据库设计 (PostgreSQL)
+## Database Selection
 
-### 用户相关
+| Scenario | Database | Description |
+|----------|----------|-------------|
+| Web Version | PostgreSQL + pgvector | Vector search support |
+| Desktop Version | SQLite | Lightweight local storage |
+| Cache | Redis | Agent state, session cache |
+
+---
+
+## Web Database Design (PostgreSQL)
+
+### User Related
 
 ```sql
--- 用户表
+-- Users table
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 用户设置表
+-- User settings table
 CREATE TABLE user_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -46,10 +46,10 @@ CREATE TABLE user_settings (
 );
 ```
 
-### 会话相关
+### Conversation Related
 
 ```sql
--- 会话表
+-- Conversations table
 CREATE TABLE conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -63,7 +63,7 @@ CREATE TABLE conversations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 消息表
+-- Messages table
 CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
@@ -72,11 +72,11 @@ CREATE TABLE messages (
   model VARCHAR(100),
   tokens_used INTEGER,
   metadata JSONB DEFAULT '{}',
-  parent_id UUID REFERENCES messages(id),  -- 用于分支对话
+  parent_id UUID REFERENCES messages(id),  -- For branching conversations
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 文件夹表
+-- Folders table
 CREATE TABLE folders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -86,17 +86,17 @@ CREATE TABLE folders (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 索引
+-- Indexes
 CREATE INDEX idx_conversations_user_id ON conversations(user_id);
 CREATE INDEX idx_conversations_folder_id ON conversations(folder_id);
 CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX idx_messages_created_at ON messages(created_at);
 ```
 
-### 知识库相关
+### Knowledge Base Related
 
 ```sql
--- 知识库表
+-- Knowledge bases table
 CREATE TABLE knowledge_bases (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -109,7 +109,7 @@ CREATE TABLE knowledge_bases (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 文档表
+-- Documents table
 CREATE TABLE documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   knowledge_base_id UUID REFERENCES knowledge_bases(id) ON DELETE CASCADE,
@@ -125,32 +125,32 @@ CREATE TABLE documents (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 文档块表（向量存储）
+-- Document chunks table (vector storage)
 CREATE TABLE document_chunks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
-  embedding vector(1536),  -- OpenAI text-embedding-3-small 维度
+  embedding vector(1536),  -- OpenAI text-embedding-3-small dimensions
   chunk_index INTEGER,
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 向量索引
+-- Vector index
 CREATE INDEX idx_document_chunks_embedding ON document_chunks
   USING ivfflat (embedding vector_cosine_ops)
   WITH (lists = 100);
 
--- 索引
+-- Indexes
 CREATE INDEX idx_knowledge_bases_user_id ON knowledge_bases(user_id);
 CREATE INDEX idx_documents_knowledge_base_id ON documents(knowledge_base_id);
 CREATE INDEX idx_document_chunks_document_id ON document_chunks(document_id);
 ```
 
-### 助手相关
+### Assistant Related
 
 ```sql
--- 助手表
+-- Assistants table
 CREATE TABLE assistants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -168,21 +168,21 @@ CREATE TABLE assistants (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 索引
+-- Indexes
 CREATE INDEX idx_assistants_user_id ON assistants(user_id);
 CREATE INDEX idx_assistants_is_public ON assistants(is_public);
 ```
 
-### 模型配置相关
+### Model Configuration Related
 
 ```sql
--- 模型提供商配置表
+-- Model providers configuration table
 CREATE TABLE model_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   provider VARCHAR(50) NOT NULL,  -- 'openai' | 'anthropic' | 'ollama' | ...
   name VARCHAR(100),
-  api_key_encrypted TEXT,  -- 加密存储
+  api_key_encrypted TEXT,  -- Encrypted storage
   base_url VARCHAR(500),
   is_enabled BOOLEAN DEFAULT TRUE,
   config JSONB DEFAULT '{}',
@@ -191,14 +191,14 @@ CREATE TABLE model_providers (
   UNIQUE(user_id, provider)
 );
 
--- 索引
+-- Indexes
 CREATE INDEX idx_model_providers_user_id ON model_providers(user_id);
 ```
 
-### 插件相关
+### Plugin Related
 
 ```sql
--- 已安装插件表
+-- Installed plugins table
 CREATE TABLE installed_plugins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -213,10 +213,10 @@ CREATE TABLE installed_plugins (
 );
 ```
 
-### 系统设置
+### System Settings
 
 ```sql
--- 系统设置表（管理员配置）
+-- System settings table (admin configuration)
 CREATE TABLE system_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   key VARCHAR(255) UNIQUE NOT NULL,
@@ -228,16 +228,16 @@ CREATE TABLE system_settings (
 
 ---
 
-## 桌面版数据库设计 (SQLite)
+## Desktop Database Design (SQLite)
 
-桌面版使用 SQLite，Schema 与 Web 版类似，但有以下区别：
+Desktop version uses SQLite with similar schema to Web version, but with these differences:
 
-1. **无用户表** - 桌面版为单用户
-2. **无向量扩展** - 使用 sqlite-vss 或内存向量搜索
-3. **简化的权限** - 无需 RBAC
+1. **No users table** - Desktop is single-user
+2. **No vector extension** - Uses sqlite-vss or in-memory vector search
+3. **Simplified permissions** - No RBAC needed
 
 ```sql
--- 会话表
+-- Conversations table
 CREATE TABLE conversations (
   id TEXT PRIMARY KEY,
   title TEXT,
@@ -250,7 +250,7 @@ CREATE TABLE conversations (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 消息表
+-- Messages table
 CREATE TABLE messages (
   id TEXT PRIMARY KEY,
   conversation_id TEXT REFERENCES conversations(id) ON DELETE CASCADE,
@@ -263,7 +263,7 @@ CREATE TABLE messages (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
--- 知识库表
+-- Knowledge bases table
 CREATE TABLE knowledge_bases (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -275,7 +275,7 @@ CREATE TABLE knowledge_bases (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 文档表
+-- Documents table
 CREATE TABLE documents (
   id TEXT PRIMARY KEY,
   knowledge_base_id TEXT REFERENCES knowledge_bases(id) ON DELETE CASCADE,
@@ -289,18 +289,18 @@ CREATE TABLE documents (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 文档块表
+-- Document chunks table
 CREATE TABLE document_chunks (
   id TEXT PRIMARY KEY,
   document_id TEXT REFERENCES documents(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
-  embedding BLOB,  -- 向量存储为二进制
+  embedding BLOB,  -- Vector stored as binary
   chunk_index INTEGER,
   metadata TEXT DEFAULT '{}',
   created_at TEXT DEFAULT (datetime('now'))
 );
 
--- 助手表
+-- Assistants table
 CREATE TABLE assistants (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -316,7 +316,7 @@ CREATE TABLE assistants (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 模型提供商配置表
+-- Model providers configuration table
 CREATE TABLE model_providers (
   id TEXT PRIMARY KEY,
   provider TEXT NOT NULL UNIQUE,
@@ -329,14 +329,14 @@ CREATE TABLE model_providers (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 设置表
+-- Settings table
 CREATE TABLE settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL,
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 索引
+-- Indexes
 CREATE INDEX idx_conversations_folder_id ON conversations(folder_id);
 CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX idx_documents_knowledge_base_id ON documents(knowledge_base_id);
@@ -347,7 +347,7 @@ CREATE INDEX idx_document_chunks_document_id ON document_chunks(document_id);
 
 ## Drizzle ORM Schema
 
-### Web 版 Schema 示例
+### Web Schema Example
 
 ```typescript
 // packages/database/schema/users.ts
@@ -402,23 +402,23 @@ export const messages = pgTable('messages', {
 
 ---
 
-## 数据迁移策略
+## Data Migration Strategy
 
-### Web 版
+### Web Version
 
-使用 Drizzle Kit 进行数据库迁移：
+Use Drizzle Kit for database migrations:
 
 ```bash
-# 生成迁移文件
+# Generate migration files
 pnpm drizzle-kit generate:pg
 
-# 执行迁移
+# Execute migrations
 pnpm drizzle-kit push:pg
 ```
 
-### 桌面版
+### Desktop Version
 
-使用内置迁移脚本：
+Use built-in migration scripts:
 
 ```typescript
 // apps/desktop/main/database.ts

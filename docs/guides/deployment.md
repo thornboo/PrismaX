@@ -1,27 +1,27 @@
-# 部署指南
+# Deployment Guide
 
-> 本文档描述 PrismaX 的部署方案与流程
-
----
-
-## 概述
-
-PrismaX 支持多种部署方式：
-
-| 部署方式 | 适用场景 | 复杂度 |
-|----------|----------|--------|
-| Docker Compose | 个人/小团队自托管 | 低 |
-| Kubernetes | 企业级生产环境 | 高 |
-| Vercel + 云服务 | 快速部署 | 低 |
-| 桌面应用分发 | 终端用户 | 中 |
+> This document describes PrismaX deployment solutions and processes
 
 ---
 
-## Docker 部署
+## Overview
 
-### 单机部署（Docker Compose）
+PrismaX supports multiple deployment methods:
 
-#### 目录结构
+| Deployment Method | Use Case | Complexity |
+|-------------------|----------|------------|
+| Docker Compose | Personal/small team self-hosting | Low |
+| Kubernetes | Enterprise production environment | High |
+| Vercel + Cloud Services | Quick deployment | Low |
+| Desktop App Distribution | End users | Medium |
+
+---
+
+## Docker Deployment
+
+### Single Machine Deployment (Docker Compose)
+
+#### Directory Structure
 
 ```
 deploy/
@@ -105,40 +105,40 @@ volumes:
 #### Dockerfile
 
 ```dockerfile
-# 构建阶段
+# Build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# 安装 pnpm
+# Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# 复制依赖文件
+# Copy dependency files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/*/package.json ./packages/
 COPY apps/*/package.json ./apps/
 
-# 安装依赖
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# 复制源代码
+# Copy source code
 COPY . .
 
-# 构建
+# Build
 RUN pnpm build:web
 
-# 生产阶段
+# Production stage
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# 创建非 root 用户
+# Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# 复制构建产物
+# Copy build artifacts
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
@@ -153,7 +153,7 @@ ENV HOSTNAME="0.0.0.0"
 CMD ["node", "apps/web/server.js"]
 ```
 
-#### Nginx 配置
+#### Nginx Configuration
 
 ```nginx
 # nginx/nginx.conf
@@ -166,14 +166,14 @@ http {
         server app:3000;
     }
 
-    # HTTP -> HTTPS 重定向
+    # HTTP -> HTTPS redirect
     server {
         listen 80;
         server_name _;
         return 301 https://$host$request_uri;
     }
 
-    # HTTPS 服务器
+    # HTTPS server
     server {
         listen 443 ssl http2;
         server_name _;
@@ -184,13 +184,13 @@ http {
         ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
         ssl_prefer_server_ciphers off;
 
-        # 安全头
+        # Security headers
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
         add_header X-Content-Type-Options nosniff;
         add_header X-Frame-Options DENY;
         add_header X-XSS-Protection "1; mode=block";
 
-        # Gzip 压缩
+        # Gzip compression
         gzip on;
         gzip_types text/plain text/css application/json application/javascript;
 
@@ -206,7 +206,7 @@ http {
             proxy_cache_bypass $http_upgrade;
         }
 
-        # 静态文件缓存
+        # Static file caching
         location /_next/static {
             proxy_pass http://app;
             proxy_cache_valid 200 365d;
@@ -216,39 +216,39 @@ http {
 }
 ```
 
-#### 部署步骤
+#### Deployment Steps
 
 ```bash
-# 1. 克隆项目
+# 1. Clone project
 git clone https://github.com/your-username/PrismaX.git
 cd PrismaX
 
-# 2. 配置环境变量
+# 2. Configure environment variables
 cp deploy/.env.example deploy/.env
-# 编辑 .env 文件，设置必要的环境变量
+# Edit .env file, set required environment variables
 
-# 3. 生成 SSL 证书（生产环境使用 Let's Encrypt）
-# 开发环境可以使用自签名证书
+# 3. Generate SSL certificate (use Let's Encrypt for production)
+# For development, use self-signed certificate
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout deploy/nginx/ssl/key.pem \
   -out deploy/nginx/ssl/cert.pem
 
-# 4. 启动服务
+# 4. Start services
 cd deploy
 docker-compose up -d
 
-# 5. 初始化数据库
+# 5. Initialize database
 docker-compose exec app pnpm db:migrate
 
-# 6. 查看日志
+# 6. View logs
 docker-compose logs -f app
 ```
 
 ---
 
-## Kubernetes 部署
+## Kubernetes Deployment
 
-### 架构图
+### Architecture Diagram
 
 ```
                     +------------------+
@@ -269,7 +269,7 @@ docker-compose logs -f app
     +-------------------+         +-------------------+
 ```
 
-### Kubernetes 配置
+### Kubernetes Configuration
 
 #### namespace.yaml
 
@@ -407,7 +407,7 @@ spec:
                   number: 80
 ```
 
-#### hpa.yaml（自动扩缩容）
+#### hpa.yaml (Horizontal Pod Autoscaler)
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -437,27 +437,27 @@ spec:
           averageUtilization: 80
 ```
 
-### 部署命令
+### Deployment Commands
 
 ```bash
-# 应用所有配置
+# Apply all configurations
 kubectl apply -f k8s/
 
-# 查看部署状态
+# Check deployment status
 kubectl get pods -n prismax
 
-# 查看日志
+# View logs
 kubectl logs -f deployment/prismax-app -n prismax
 
-# 扩容
+# Scale up
 kubectl scale deployment prismax-app --replicas=5 -n prismax
 ```
 
 ---
 
-## Vercel 部署
+## Vercel Deployment
 
-### 配置文件
+### Configuration File
 
 ```json
 // vercel.json
@@ -472,36 +472,36 @@ kubectl scale deployment prismax-app --replicas=5 -n prismax
 }
 ```
 
-### 部署步骤
+### Deployment Steps
 
 ```bash
-# 1. 安装 Vercel CLI
+# 1. Install Vercel CLI
 npm i -g vercel
 
-# 2. 登录
+# 2. Login
 vercel login
 
-# 3. 部署
+# 3. Deploy
 vercel --prod
 
-# 4. 配置环境变量（在 Vercel 控制台）
-# DATABASE_URL, REDIS_URL, JWT_SECRET 等
+# 4. Configure environment variables (in Vercel dashboard)
+# DATABASE_URL, REDIS_URL, JWT_SECRET, etc.
 ```
 
-### 外部服务配置
+### External Service Configuration
 
-| 服务 | 推荐方案 |
-|------|----------|
+| Service | Recommended Solution |
+|---------|---------------------|
 | PostgreSQL | Supabase / Neon / PlanetScale |
 | Redis | Upstash / Redis Cloud |
-| 文件存储 | Vercel Blob / AWS S3 |
-| 向量数据库 | Pinecone / Supabase pgvector |
+| File Storage | Vercel Blob / AWS S3 |
+| Vector Database | Pinecone / Supabase pgvector |
 
 ---
 
-## 桌面应用分发
+## Desktop App Distribution
 
-### 构建配置
+### Build Configuration
 
 ```typescript
 // electron-builder.config.ts
@@ -558,7 +558,7 @@ const config: Configuration = {
 export default config;
 ```
 
-### 自动更新
+### Auto Update
 
 ```typescript
 // desktop/updater.ts
@@ -573,9 +573,9 @@ export function initAutoUpdater() {
     dialog
       .showMessageBox({
         type: 'info',
-        title: '发现新版本',
-        message: `新版本 ${info.version} 可用，是否下载？`,
-        buttons: ['下载', '稍后'],
+        title: 'Update Available',
+        message: `Version ${info.version} is available. Download now?`,
+        buttons: ['Download', 'Later'],
       })
       .then((result) => {
         if (result.response === 0) {
@@ -588,9 +588,9 @@ export function initAutoUpdater() {
     dialog
       .showMessageBox({
         type: 'info',
-        title: '更新已下载',
-        message: '更新已下载完成，重启应用以安装更新',
-        buttons: ['立即重启', '稍后'],
+        title: 'Update Downloaded',
+        message: 'Update downloaded. Restart to install?',
+        buttons: ['Restart Now', 'Later'],
       })
       .then((result) => {
         if (result.response === 0) {
@@ -599,176 +599,67 @@ export function initAutoUpdater() {
       });
   });
 
-  // 检查更新
+  // Check for updates
   autoUpdater.checkForUpdates();
 }
 ```
 
-### 构建与发布
+### Build and Release
 
 ```bash
-# 构建所有平台
+# Build all platforms
 pnpm build:desktop
 
-# 仅构建 macOS
+# Build macOS only
 pnpm build:desktop --mac
 
-# 仅构建 Windows
+# Build Windows only
 pnpm build:desktop --win
 
-# 仅构建 Linux
+# Build Linux only
 pnpm build:desktop --linux
 
-# 发布到 GitHub Releases
+# Release to GitHub Releases
 pnpm release:desktop
 ```
 
 ---
 
-## CI/CD 流水线
+## Environment Variables
 
-### GitHub Actions
+### Required Variables
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
+| `REDIS_URL` | Redis connection string | `redis://host:6379` |
+| `JWT_SECRET` | JWT signing key | Random 32-byte string |
+| `ENCRYPTION_KEY` | Data encryption key | Random 32-byte string |
 
-on:
-  push:
-    branches: [main]
-  release:
-    types: [published]
+### Optional Variables
 
-jobs:
-  # Web 部署
-  deploy-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Service port | `3000` |
+| `NODE_ENV` | Runtime environment | `development` |
+| `LOG_LEVEL` | Log level | `info` |
+| `CORS_ORIGINS` | CORS allowed origins | `*` |
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build
-        run: pnpm build:web
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-
-  # Docker 镜像构建
-  build-docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # 桌面应用构建
-  build-desktop:
-    if: github.event_name == 'release'
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build Desktop App
-        run: pnpm build:desktop
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: desktop-${{ matrix.os }}
-          path: release/*
-```
-
----
-
-## 环境变量
-
-### 必需变量
-
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| `DATABASE_URL` | PostgreSQL 连接字符串 | `postgresql://user:pass@host:5432/db` |
-| `REDIS_URL` | Redis 连接字符串 | `redis://host:6379` |
-| `JWT_SECRET` | JWT 签名密钥 | 随机 32 字节字符串 |
-| `ENCRYPTION_KEY` | 数据加密密钥 | 随机 32 字节字符串 |
-
-### 可选变量
-
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `PORT` | 服务端口 | `3000` |
-| `NODE_ENV` | 运行环境 | `development` |
-| `LOG_LEVEL` | 日志级别 | `info` |
-| `CORS_ORIGINS` | CORS 允许的源 | `*` |
-
-### 生成密钥
+### Generate Keys
 
 ```bash
-# 生成随机密钥
+# Generate random key
 openssl rand -hex 32
 
-# 或使用 Node.js
+# Or use Node.js
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ---
 
-## 监控与告警
+## Monitoring and Alerting
 
-### 健康检查端点
+### Health Check Endpoint
 
 ```typescript
 // pages/api/health.ts
@@ -784,7 +675,7 @@ export default function handler(req, res) {
 }
 ```
 
-### Prometheus 指标
+### Prometheus Metrics
 
 ```typescript
 // metrics.ts
@@ -808,35 +699,11 @@ export const httpRequestDuration = new Histogram({
 });
 ```
 
-### 告警规则
-
-```yaml
-# prometheus/alerts.yml
-groups:
-  - name: prismax
-    rules:
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: High error rate detected
-
-      - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: High latency detected
-```
-
 ---
 
-## 备份与恢复
+## Backup and Recovery
 
-### 数据库备份
+### Database Backup
 
 ```bash
 #!/bin/bash
@@ -845,17 +712,17 @@ groups:
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=/backups
 
-# PostgreSQL 备份
+# PostgreSQL backup
 docker-compose exec -T db pg_dump -U postgres prismax | gzip > $BACKUP_DIR/db_$DATE.sql.gz
 
-# 保留最近 7 天的备份
+# Keep last 7 days of backups
 find $BACKUP_DIR -name "db_*.sql.gz" -mtime +7 -delete
 
-# 上传到 S3（可选）
+# Upload to S3 (optional)
 aws s3 cp $BACKUP_DIR/db_$DATE.sql.gz s3://your-bucket/backups/
 ```
 
-### 数据库恢复
+### Database Recovery
 
 ```bash
 #!/bin/bash
@@ -868,31 +735,31 @@ if [ -z "$BACKUP_FILE" ]; then
   exit 1
 fi
 
-# 恢复数据库
+# Restore database
 gunzip -c $BACKUP_FILE | docker-compose exec -T db psql -U postgres prismax
 ```
 
-### 定时备份（Cron）
+### Scheduled Backup (Cron)
 
 ```bash
-# 每天凌晨 2 点备份
+# Backup daily at 2 AM
 0 2 * * * /path/to/scripts/backup.sh >> /var/log/backup.log 2>&1
 ```
 
 ---
 
-## 故障排查
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-| 问题 | 可能原因 | 解决方案 |
-|------|----------|----------|
-| 数据库连接失败 | 网络/凭证问题 | 检查 DATABASE_URL 和网络连通性 |
-| 内存溢出 | 内存限制过低 | 增加容器内存限制 |
-| 响应超时 | AI API 延迟 | 增加超时时间，添加重试机制 |
-| SSL 证书错误 | 证书过期/配置错误 | 更新证书，检查 Nginx 配置 |
+| Issue | Possible Cause | Solution |
+|-------|----------------|----------|
+| Database connection failed | Network/credential issue | Check DATABASE_URL and network connectivity |
+| Out of memory | Memory limit too low | Increase container memory limit |
+| Response timeout | AI API latency | Increase timeout, add retry mechanism |
+| SSL certificate error | Certificate expired/misconfigured | Update certificate, check Nginx config |
 
-### 日志查看
+### View Logs
 
 ```bash
 # Docker Compose
@@ -901,16 +768,16 @@ docker-compose logs -f app
 # Kubernetes
 kubectl logs -f deployment/prismax-app -n prismax
 
-# 查看特定时间段
+# View specific time range
 kubectl logs --since=1h deployment/prismax-app -n prismax
 ```
 
-### 性能分析
+### Performance Analysis
 
 ```bash
-# 查看容器资源使用
+# View container resource usage
 docker stats
 
-# Kubernetes 资源使用
+# Kubernetes resource usage
 kubectl top pods -n prismax
 ```

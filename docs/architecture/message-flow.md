@@ -1,50 +1,50 @@
-# 消息流设计
+# Message Flow Design
 
-> 本文档描述 PrismaX 的消息处理流程设计
-
----
-
-## 概述
-
-消息流是 PrismaX 的核心功能，涉及用户输入、AI 模型调用、流式响应、消息存储等多个环节。
+> This document describes the PrismaX message processing flow design
 
 ---
 
-## 消息发送流程
+## Overview
 
-### 整体流程
+Message flow is the core functionality of PrismaX, involving user input, AI model calls, streaming responses, message storage, and more.
+
+---
+
+## Message Sending Flow
+
+### Overall Flow
 
 ```
 +--------+     +--------+     +--------+     +--------+     +--------+
-|  用户   | --> |  UI层  | --> | Store层| --> | Core层 | --> | AI SDK |
-| 输入    |     | 组件   |     | Action |     | 处理   |     | 调用   |
+|  User  | --> |   UI   | --> | Store  | --> |  Core  | --> | AI SDK |
+| Input  |     | Layer  |     | Action |     | Process|     |  Call  |
 +--------+     +--------+     +--------+     +--------+     +----+---+
                                                                  |
                                                                  v
 +--------+     +--------+     +--------+     +--------+     +--------+
-|  UI    | <-- | Store层| <-- | Core层 | <-- | 流式   | <-- | AI模型 |
-| 更新    |     | 更新   |     | 解析   |     | 响应   |     | 服务   |
+|   UI   | <-- | Store  | <-- |  Core  | <-- | Stream | <-- |AI Model|
+| Update |     | Update |     |  Parse |     |Response|     |Service |
 +--------+     +--------+     +--------+     +--------+     +--------+
 ```
 
-### 详细步骤
+### Detailed Steps
 
-#### 1. 用户输入
+#### 1. User Input
 
 ```typescript
-// ChatInput 组件
+// ChatInput component
 function ChatInput() {
   const handleSubmit = async (content: string) => {
-    // 1. 验证输入
+    // 1. Validate input
     if (!content.trim()) return;
 
-    // 2. 调用 Store Action
+    // 2. Call Store Action
     await chatStore.sendMessage(content);
   };
 }
 ```
 
-#### 2. Store 处理
+#### 2. Store Processing
 
 ```typescript
 // chatStore.ts
@@ -52,7 +52,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
   sendMessage: async (content: string) => {
     const { activeConversationId, settings } = get();
 
-    // 1. 创建用户消息
+    // 1. Create user message
     const userMessage: Message = {
       id: generateId(),
       conversationId: activeConversationId,
@@ -61,7 +61,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
       createdAt: new Date(),
     };
 
-    // 2. 添加到消息列表
+    // 2. Add to message list
     set((state) => ({
       messages: {
         ...state.messages,
@@ -72,7 +72,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
       },
     }));
 
-    // 3. 创建占位 AI 消息
+    // 3. Create placeholder AI message
     const assistantMessage: Message = {
       id: generateId(),
       conversationId: activeConversationId,
@@ -92,7 +92,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
       isGenerating: true,
     }));
 
-    // 4. 调用 AI 服务
+    // 4. Call AI service
     try {
       const stream = await chatService.sendMessage({
         conversationId: activeConversationId,
@@ -100,7 +100,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
         model: settings.defaultModel,
       });
 
-      // 5. 处理流式响应
+      // 5. Handle streaming response
       for await (const chunk of stream) {
         set((state) => ({
           messages: {
@@ -121,14 +121,14 @@ const useChatStore = create<ChatStore>((set, get) => ({
 }));
 ```
 
-#### 3. AI SDK 调用
+#### 3. AI SDK Call
 
 ```typescript
 // ai-sdk/chat.ts
 async function* sendMessage(params: SendMessageParams) {
   const { messages, model, knowledgeBaseIds } = params;
 
-  // 1. 知识库检索（如果启用）
+  // 1. Knowledge base retrieval (if enabled)
   let context = '';
   if (knowledgeBaseIds?.length) {
     const results = await knowledgeService.search({
@@ -138,20 +138,20 @@ async function* sendMessage(params: SendMessageParams) {
     context = formatContext(results);
   }
 
-  // 2. 构建请求消息
+  // 2. Build request messages
   const requestMessages = buildMessages(messages, context);
 
-  // 3. 获取 Provider
+  // 3. Get Provider
   const provider = getProvider(model);
 
-  // 4. 调用模型
+  // 4. Call model
   const stream = await provider.chatStream(requestMessages, {
     model,
     temperature: params.temperature,
     maxTokens: params.maxTokens,
   });
 
-  // 5. 转发流式响应
+  // 5. Forward streaming response
   for await (const chunk of stream) {
     yield chunk;
   }
@@ -160,9 +160,9 @@ async function* sendMessage(params: SendMessageParams) {
 
 ---
 
-## 流式响应处理
+## Streaming Response Handling
 
-### SSE 解析
+### SSE Parsing
 
 ```typescript
 // streaming/parser.ts
@@ -195,7 +195,7 @@ async function* parseSSEStream(
             content: parsed.choices[0]?.delta?.content || '',
           };
         } catch {
-          // 忽略解析错误
+          // Ignore parse errors
         }
       }
     }
@@ -203,12 +203,12 @@ async function* parseSSEStream(
 }
 ```
 
-### 响应转换
+### Response Transformation
 
 ```typescript
 // streaming/transformer.ts
 function transformResponse(chunk: ProviderChunk): ChatChunk {
-  // 统一不同 Provider 的响应格式
+  // Unify response format from different providers
   switch (chunk.provider) {
     case 'openai':
       return {
@@ -231,9 +231,9 @@ function transformResponse(chunk: ProviderChunk): ChatChunk {
 
 ---
 
-## 消息存储
+## Message Storage
 
-### Web 版（PostgreSQL）
+### Web Version (PostgreSQL)
 
 ```typescript
 // services/message.ts
@@ -267,7 +267,7 @@ class MessageService {
 }
 ```
 
-### 桌面版（SQLite）
+### Desktop Version (SQLite)
 
 ```typescript
 // desktop/database.ts
@@ -294,19 +294,19 @@ class LocalMessageService {
 
 ---
 
-## 消息重新生成
+## Message Regeneration
 
-### 流程
+### Flow
 
 ```
-1. 用户点击"重新生成"
-2. 删除当前 AI 回复
-3. 获取上下文消息
-4. 重新调用 AI 服务
-5. 更新消息内容
+1. User clicks "Regenerate"
+2. Delete current AI response
+3. Get context messages
+4. Re-call AI service
+5. Update message content
 ```
 
-### 实现
+### Implementation
 
 ```typescript
 // chatStore.ts
@@ -314,14 +314,14 @@ regenerateMessage: async (messageId: string) => {
   const { activeConversationId } = get();
   const messages = get().messages[activeConversationId];
 
-  // 1. 找到要重新生成的消息
+  // 1. Find the message to regenerate
   const messageIndex = messages.findIndex((m) => m.id === messageId);
   if (messageIndex === -1) return;
 
-  // 2. 获取上下文（该消息之前的所有消息）
+  // 2. Get context (all messages before this one)
   const contextMessages = messages.slice(0, messageIndex);
 
-  // 3. 清空当前消息内容
+  // 3. Clear current message content
   set((state) => ({
     messages: {
       ...state.messages,
@@ -332,7 +332,7 @@ regenerateMessage: async (messageId: string) => {
     isGenerating: true,
   }));
 
-  // 4. 重新调用 AI
+  // 4. Re-call AI
   try {
     const stream = await chatService.sendMessage({
       conversationId: activeConversationId,
@@ -360,18 +360,18 @@ regenerateMessage: async (messageId: string) => {
 
 ---
 
-## 消息编辑
+## Message Editing
 
-### 流程
+### Flow
 
 ```
-1. 用户编辑消息
-2. 更新消息内容
-3. 删除该消息之后的所有消息
-4. 如果编辑的是用户消息，重新生成 AI 回复
+1. User edits message
+2. Update message content
+3. Delete all messages after this one
+4. If editing user message, regenerate AI response
 ```
 
-### 实现
+### Implementation
 
 ```typescript
 // chatStore.ts
@@ -379,13 +379,13 @@ editMessage: async (messageId: string, newContent: string) => {
   const { activeConversationId } = get();
   const messages = get().messages[activeConversationId];
 
-  // 1. 找到消息位置
+  // 1. Find message position
   const messageIndex = messages.findIndex((m) => m.id === messageId);
   if (messageIndex === -1) return;
 
   const message = messages[messageIndex];
 
-  // 2. 更新消息内容，删除后续消息
+  // 2. Update message content, delete subsequent messages
   set((state) => ({
     messages: {
       ...state.messages,
@@ -397,7 +397,7 @@ editMessage: async (messageId: string, newContent: string) => {
     },
   }));
 
-  // 3. 如果是用户消息，重新生成 AI 回复
+  // 3. If user message, regenerate AI response
   if (message.role === 'user') {
     await get().sendMessage(newContent, { skipUserMessage: true });
   }
@@ -406,16 +406,16 @@ editMessage: async (messageId: string, newContent: string) => {
 
 ---
 
-## 停止生成
+## Stop Generation
 
-### 实现
+### Implementation
 
 ```typescript
 // chatStore.ts
 const abortControllerRef = { current: null as AbortController | null };
 
 sendMessage: async (content: string) => {
-  // 创建 AbortController
+  // Create AbortController
   abortControllerRef.current = new AbortController();
 
   try {
@@ -425,15 +425,15 @@ sendMessage: async (content: string) => {
     });
 
     for await (const chunk of stream) {
-      // 检查是否被中止
+      // Check if aborted
       if (abortControllerRef.current?.signal.aborted) {
         break;
       }
-      // 处理 chunk
+      // Process chunk
     }
   } catch (error) {
     if (error.name === 'AbortError') {
-      // 用户主动停止，不是错误
+      // User stopped, not an error
       return;
     }
     throw error;
@@ -448,27 +448,27 @@ stopGeneration: () => {
 
 ---
 
-## 错误处理
+## Error Handling
 
-### 错误类型
+### Error Types
 
-| 错误类型 | 说明 | 处理方式 |
-|----------|------|----------|
-| NetworkError | 网络错误 | 提示重试 |
-| AuthError | 认证错误 | 提示检查 API Key |
-| RateLimitError | 频率限制 | 提示稍后重试 |
-| ModelError | 模型错误 | 显示错误信息 |
-| TimeoutError | 超时 | 提示重试 |
+| Error Type | Description | Handling |
+|------------|-------------|----------|
+| NetworkError | Network error | Prompt retry |
+| AuthError | Authentication error | Prompt to check API Key |
+| RateLimitError | Rate limit | Prompt to retry later |
+| ModelError | Model error | Display error message |
+| TimeoutError | Timeout | Prompt retry |
 
-### 错误处理
+### Error Handling
 
 ```typescript
 // chatStore.ts
 sendMessage: async (content: string) => {
   try {
-    // ... 发送消息
+    // ... send message
   } catch (error) {
-    // 更新消息状态为错误
+    // Update message status to error
     set((state) => ({
       messages: {
         ...state.messages,
@@ -488,7 +488,7 @@ sendMessage: async (content: string) => {
       isGenerating: false,
     }));
 
-    // 显示错误提示
+    // Show error toast
     toast.error(getErrorMessage(error));
   }
 };
@@ -496,11 +496,11 @@ sendMessage: async (content: string) => {
 
 ---
 
-## 性能优化
+## Performance Optimization
 
-### 虚拟列表
+### Virtual List
 
-对于长对话，使用虚拟列表优化渲染：
+For long conversations, use virtual list to optimize rendering:
 
 ```typescript
 // ChatList.tsx
@@ -544,23 +544,23 @@ function ChatList({ messages }: { messages: Message[] }) {
 }
 ```
 
-### 消息缓存
+### Message Caching
 
 ```typescript
-// 使用 React Query 缓存消息
+// Use React Query to cache messages
 const useMessages = (conversationId: string) => {
   return useQuery({
     queryKey: ['messages', conversationId],
     queryFn: () => messageService.getMessages(conversationId),
-    staleTime: 5 * 60 * 1000, // 5 分钟
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 ```
 
-### 防抖输入
+### Debounced Input
 
 ```typescript
-// 输入时防抖保存草稿
+// Debounce save draft while typing
 const debouncedSaveDraft = useMemo(
   () =>
     debounce((content: string) => {

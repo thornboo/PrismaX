@@ -1,47 +1,47 @@
-# 系统架构
+# System Architecture
 
-> 本文档描述 PrismaX 的系统架构设计
+> This document describes the PrismaX system architecture design
 
 ---
 
-## 分层架构
+## Layered Architecture
 
-### 1. 用户界面层 (UI Layer)
+### 1. User Interface Layer (UI Layer)
 
-**位置**: `packages/ui/` + `apps/*/components/`
+**Location**: `packages/ui/` + `apps/*/components/`
 
-**职责**:
-- 渲染用户界面
-- 处理用户交互
-- 响应式布局
+**Responsibilities**:
+- Render user interface
+- Handle user interactions
+- Responsive layout
 
-**技术选型**:
+**Tech Stack**:
 - React 19 + TypeScript
 - shadcn/ui + Radix UI
 - Tailwind CSS
-- Framer Motion（动画）
+- Framer Motion (animations)
 
-**组件分类**:
+**Component Categories**:
 ```
 packages/ui/
 ├── components/
-│   ├── chat/              # 聊天相关组件
+│   ├── chat/              # Chat-related components
 │   │   ├── ChatInput.tsx
 │   │   ├── ChatMessage.tsx
 │   │   ├── ChatList.tsx
 │   │   └── ...
 │   │
-│   ├── knowledge/         # 知识库相关组件
+│   ├── knowledge/         # Knowledge base components
 │   │   ├── FileUpload.tsx
 │   │   ├── DocumentList.tsx
 │   │   └── ...
 │   │
-│   ├── settings/          # 设置相关组件
+│   ├── settings/          # Settings components
 │   │   ├── ModelConfig.tsx
 │   │   ├── ThemeSwitch.tsx
 │   │   └── ...
 │   │
-│   └── common/            # 通用组件
+│   └── common/            # Common components
 │       ├── Button.tsx
 │       ├── Input.tsx
 │       ├── Modal.tsx
@@ -50,23 +50,23 @@ packages/ui/
 
 ---
 
-### 2. 状态管理层 (State Layer)
+### 2. State Management Layer (State Layer)
 
-**位置**: `packages/core/stores/`
+**Location**: `packages/core/stores/`
 
-**职责**:
-- 管理应用状态
-- 处理状态变更
-- 状态持久化
+**Responsibilities**:
+- Manage application state
+- Handle state changes
+- State persistence
 
-**技术选型**:
+**Tech Stack**:
 - Zustand
-- Immer（不可变数据更新）
-- zustand/middleware（持久化）
+- Immer (immutable data updates)
+- zustand/middleware (persistence)
 
-**Store 设计**:
+**Store Design**:
 ```typescript
-// 聊天状态
+// Chat state
 interface ChatStore {
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -78,7 +78,7 @@ interface ChatStore {
   deleteConversation: (id: string) => void;
 }
 
-// 设置状态
+// Settings state
 interface SettingsStore {
   theme: 'light' | 'dark' | 'system';
   language: string;
@@ -89,7 +89,7 @@ interface SettingsStore {
   setLanguage: (lang: string) => void;
 }
 
-// 知识库状态
+// Knowledge base state
 interface KnowledgeStore {
   knowledgeBases: KnowledgeBase[];
   documents: Record<string, Document[]>;
@@ -102,131 +102,131 @@ interface KnowledgeStore {
 
 ---
 
-### 3. 核心业务逻辑层 (Core Layer)
+### 3. Core Business Logic Layer (Core Layer)
 
-**位置**: `packages/core/`
+**Location**: `packages/core/`
 
-**职责**:
-- 封装业务逻辑
-- 平台无关的核心功能
-- 数据处理和转换
+**Responsibilities**:
+- Encapsulate business logic
+- Platform-agnostic core functionality
+- Data processing and transformation
 
-**模块划分**:
+**Module Structure**:
 ```
 packages/core/
-├── chat/                  # 聊天核心逻辑
-│   ├── conversation.ts    # 会话管理
-│   ├── message.ts         # 消息处理
-│   └── streaming.ts       # 流式响应处理
+├── chat/                  # Chat core logic
+│   ├── conversation.ts    # Conversation management
+│   ├── message.ts         # Message processing
+│   └── streaming.ts       # Streaming response handling
 │
-├── knowledge/             # 知识库核心逻辑
-│   ├── embedding.ts       # 向量化处理
-│   ├── retrieval.ts       # 检索逻辑
-│   └── chunking.ts        # 文档分块
+├── knowledge/             # Knowledge base core logic
+│   ├── embedding.ts       # Vectorization processing
+│   ├── retrieval.ts       # Retrieval logic
+│   └── chunking.ts        # Document chunking
 │
-├── agent/                 # Agent 核心逻辑
-│   ├── runtime.ts         # Agent 运行时
-│   ├── tools.ts           # 工具定义
-│   └── planning.ts        # 任务规划
+├── agent/                 # Agent core logic
+│   ├── runtime.ts         # Agent runtime
+│   ├── tools.ts           # Tool definitions
+│   └── planning.ts        # Task planning
 │
-├── mcp/                   # MCP 协议实现
-│   ├── client.ts          # MCP 客户端
-│   ├── server.ts          # MCP 服务端
-│   └── protocol.ts        # 协议定义
+├── mcp/                   # MCP protocol implementation
+│   ├── client.ts          # MCP client
+│   ├── server.ts          # MCP server
+│   └── protocol.ts        # Protocol definitions
 │
-└── plugins/               # 插件系统
-    ├── loader.ts          # 插件加载器
-    ├── registry.ts        # 插件注册表
-    └── types.ts           # 插件类型定义
+└── plugins/               # Plugin system
+    ├── loader.ts          # Plugin loader
+    ├── registry.ts        # Plugin registry
+    └── types.ts           # Plugin type definitions
 ```
 
 ---
 
-### 4. AI SDK 层 (AI Layer)
+### 4. AI SDK Layer (AI Layer)
 
-**位置**: `packages/ai-sdk/`
+**Location**: `packages/ai-sdk/`
 
-**职责**:
-- 统一的 AI 模型调用接口
-- 多模型提供商支持
-- 流式响应处理
+**Responsibilities**:
+- Unified AI model calling interface
+- Multi-provider support
+- Streaming response handling
 
-**支持的模型提供商**:
+**Supported Model Providers**:
 ```
 packages/ai-sdk/
 ├── providers/
 │   ├── openai/            # OpenAI (GPT-4, GPT-3.5)
 │   ├── anthropic/         # Anthropic (Claude)
 │   ├── google/            # Google (Gemini)
-│   ├── qwen/              # 阿里通义千问
+│   ├── qwen/              # Alibaba Qwen
 │   ├── deepseek/          # DeepSeek
-│   ├── ollama/            # Ollama (本地模型)
-│   ├── openrouter/        # OpenRouter (聚合)
-│   └── custom/            # 自定义 OpenAI 兼容端点
+│   ├── ollama/            # Ollama (local models)
+│   ├── openrouter/        # OpenRouter (aggregator)
+│   └── custom/            # Custom OpenAI-compatible endpoints
 ```
 
-**统一接口设计**:
+**Unified Interface Design**:
 ```typescript
 interface AIProvider {
-  // 基础对话
+  // Basic chat
   chat(messages: Message[], options?: ChatOptions): Promise<ChatResponse>;
 
-  // 流式对话
+  // Streaming chat
   chatStream(messages: Message[], options?: ChatOptions): AsyncIterable<ChatChunk>;
 
-  // 向量化
+  // Embedding
   embed(texts: string[], options?: EmbedOptions): Promise<number[][]>;
 
-  // 模型列表
+  // Model list
   listModels(): Promise<Model[]>;
 }
 ```
 
 ---
 
-### 5. 数据存储层 (Storage Layer)
+### 5. Data Storage Layer (Storage Layer)
 
-#### 5.1 桌面版存储
+#### 5.1 Desktop Storage
 
-**技术选型**:
-- SQLite (better-sqlite3) - 结构化数据
-- 本地文件系统 - 文件存储
-- electron-store - 配置存储
+**Tech Stack**:
+- SQLite (better-sqlite3) - Structured data
+- Local filesystem - File storage
+- electron-store - Configuration storage
 
-#### 5.2 Web 版存储
+#### 5.2 Web Storage
 
-**技术选型**:
-- PostgreSQL + pgvector - 结构化数据 + 向量搜索
-- Redis - 缓存 + Agent 状态
-- 本地文件系统 / S3 - 文件存储
+**Tech Stack**:
+- PostgreSQL + pgvector - Structured data + Vector search
+- Redis - Cache + Agent state
+- Local filesystem / S3 - File storage
 
 ---
 
-### 6. 平台适配层 (Platform Layer)
+### 6. Platform Adaptation Layer (Platform Layer)
 
-#### 6.1 桌面版适配 (Electron)
+#### 6.1 Desktop Adaptation (Electron)
 
 ```
 apps/desktop/
-├── main/                  # 主进程
-│   ├── index.ts           # 入口
-│   ├── window.ts          # 窗口管理
-│   ├── ipc.ts             # IPC 通信
-│   ├── tray.ts            # 系统托盘
-│   ├── updater.ts         # 自动更新
-│   └── database.ts        # SQLite 操作
+├── main/                  # Main process
+│   ├── index.ts           # Entry point
+│   ├── window.ts          # Window management
+│   ├── ipc.ts             # IPC communication
+│   ├── tray.ts            # System tray
+│   ├── updater.ts         # Auto update
+│   └── database.ts        # SQLite operations
 │
-├── preload/               # 预加载脚本
-│   └── index.ts           # 暴露安全 API
+├── preload/               # Preload scripts
+│   └── index.ts           # Expose secure APIs
 │
-└── renderer/              # 渲染进程 (Next.js)
+└── renderer/              # Renderer process (Next.js)
 ```
 
-**IPC 通信设计**:
+**IPC Communication Design**:
 ```typescript
 // preload/index.ts
 contextBridge.exposeInMainWorld('electron', {
-  // 数据库操作
+  // Database operations
   db: {
     query: (sql: string, params?: any[]) =>
       ipcRenderer.invoke('db:query', sql, params),
@@ -234,7 +234,7 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke('db:run', sql, params),
   },
 
-  // 文件操作
+  // File operations
   fs: {
     readFile: (path: string) =>
       ipcRenderer.invoke('fs:readFile', path),
@@ -244,7 +244,7 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke('fs:selectFile', options),
   },
 
-  // 系统操作
+  // System operations
   system: {
     getAppPath: () => ipcRenderer.invoke('system:getAppPath'),
     openExternal: (url: string) =>
@@ -253,90 +253,90 @@ contextBridge.exposeInMainWorld('electron', {
 });
 ```
 
-#### 6.2 Web 版适配 (Next.js)
+#### 6.2 Web Adaptation (Next.js)
 
 ```
 apps/web/
 ├── app/                   # App Router
-│   ├── (auth)/            # 认证相关页面
-│   ├── (main)/            # 主应用页面
-│   ├── api/               # API 路由
-│   └── layout.tsx         # 根布局
+│   ├── (auth)/            # Auth-related pages
+│   ├── (main)/            # Main app pages
+│   ├── api/               # API routes
+│   └── layout.tsx         # Root layout
 │
-├── server/                # 服务端逻辑
-│   ├── routers/           # tRPC 路由
-│   ├── services/          # 业务服务
-│   └── middleware/        # 中间件
+├── server/                # Server-side logic
+│   ├── routers/           # tRPC routers
+│   ├── services/          # Business services
+│   └── middleware/        # Middleware
 │
-└── lib/                   # 工具库
+└── lib/                   # Utilities
 ```
 
 ---
 
-## 数据流设计
+## Data Flow Design
 
-### 聊天消息流
+### Chat Message Flow
 
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  用户    │───▶│  UI层   │───▶│ Store层 │───▶│ Core层  │───▶│ AI SDK  │
-│  输入    │    │ 组件    │    │ Action  │    │ 处理    │    │ 调用    │
+│  User   │───▶│  UI     │───▶│  Store  │───▶│  Core   │───▶│ AI SDK  │
+│  Input  │    │ Layer   │    │ Action  │    │ Process │    │  Call   │
 └─────────┘    └─────────┘    └─────────┘    └─────────┘    └────┬────┘
                                                                   │
                                                                   ▼
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  UI     │◀───│ Store层 │◀───│ Core层  │◀───│ 流式    │◀───│ AI 模型 │
-│  更新    │    │ 更新    │    │ 解析    │    │ 响应    │    │ 服务    │
+│   UI    │◀───│  Store  │◀───│  Core   │◀───│ Stream  │◀───│ AI Model│
+│ Update  │    │ Update  │    │  Parse  │    │Response │    │ Service │
 └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘
 ```
 
-### 知识库检索流
+### Knowledge Base Retrieval Flow
 
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  用户    │───▶│ 向量化  │───▶│ 相似度  │───▶│ 重排序  │
-│  查询    │    │ Query   │    │ 搜索    │    │ Rerank  │
+│  User   │───▶│ Embed   │───▶│Similarity│───▶│ Rerank  │
+│  Query  │    │  Query  │    │ Search  │    │         │
 └─────────┘    └─────────┘    └─────────┘    └────┬────┘
                                                   │
                                                   ▼
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  AI     │◀───│ Prompt  │◀───│ 上下文  │◀───│ Top-K   │
-│  回答    │    │ 构建    │    │ 组装    │    │ 结果    │
+│   AI    │◀───│ Prompt  │◀───│ Context │◀───│  Top-K  │
+│ Answer  │    │  Build  │    │ Assembly│    │ Results │
 └─────────┘    └─────────┘    └─────────┘    └─────────┘
 ```
 
 ---
 
-## 部署架构
+## Deployment Architecture
 
-### 桌面版部署
+### Desktop Deployment
 
 ```
 ┌─────────────────────────────────────────┐
-│           用户电脑                       │
+│           User Computer                  │
 │  ┌───────────────────────────────────┐  │
 │  │         PrismaX Desktop           │  │
 │  │  ┌─────────────┐ ┌─────────────┐  │  │
 │  │  │  Electron   │ │   SQLite    │  │  │
-│  │  │  主进程     │ │   数据库    │  │  │
+│  │  │Main Process │ │  Database   │  │  │
 │  │  └─────────────┘ └─────────────┘  │  │
 │  │  ┌─────────────┐ ┌─────────────┐  │  │
-│  │  │  Chromium   │ │  本地文件   │  │  │
-│  │  │  渲染进程   │ │   存储      │  │  │
+│  │  │  Chromium   │ │ Local File  │  │  │
+│  │  │  Renderer   │ │  Storage    │  │  │
 │  │  └─────────────┘ └─────────────┘  │  │
 │  └───────────────────────────────────┘  │
 └─────────────────────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
-│         外部 AI 服务                     │
+│         External AI Services            │
 │  • OpenAI API                           │
 │  • Claude API                           │
-│  • 本地 Ollama                          │
+│  • Local Ollama                         │
 └─────────────────────────────────────────┘
 ```
 
-### Web 版部署 (Docker)
+### Web Deployment (Docker)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -344,15 +344,15 @@ apps/web/
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │                   prismax-web                        │    │
 │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │    │
-│  │  │  Next.js    │ │   tRPC      │ │  静态文件   │   │    │
-│  │  │  App        │ │   API       │ │   服务      │   │    │
+│  │  │  Next.js    │ │   tRPC      │ │   Static    │   │    │
+│  │  │    App      │ │    API      │ │   Files     │   │    │
 │  │  └─────────────┘ └─────────────┘ └─────────────┘   │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                          │                                   │
 │         ┌────────────────┼────────────────┐                 │
 │         ▼                ▼                ▼                 │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │ PostgreSQL  │  │    Redis    │  │  本地存储   │         │
+│  │ PostgreSQL  │  │    Redis    │  │Local Storage│         │
 │  │  (pgvector) │  │             │  │  (Volume)   │         │
 │  └─────────────┘  └─────────────┘  └─────────────┘         │
 │                                                              │
@@ -361,51 +361,51 @@ apps/web/
 
 ---
 
-## 安全设计
+## Security Design
 
-### 认证与授权
+### Authentication & Authorization
 
-**Web 版**:
-- Better Auth 实现用户认证
-- JWT Token 会话管理
-- 基于角色的访问控制 (RBAC)
+**Web Version**:
+- Better Auth for user authentication
+- JWT Token session management
+- Role-Based Access Control (RBAC)
 
-**桌面版**:
-- 可选的本地密码保护
-- 数据加密存储
+**Desktop Version**:
+- Optional local password protection
+- Encrypted data storage
 
-### 数据安全
+### Data Security
 
-- API Key 加密存储
-- 敏感数据不记录日志
-- HTTPS 强制（Web 版）
+- API Key encrypted storage
+- Sensitive data not logged
+- HTTPS enforced (Web version)
 
-### 输入验证
+### Input Validation
 
-- Zod Schema 验证所有输入
-- SQL 注入防护（ORM 参数化查询）
-- XSS 防护（React 自动转义）
+- Zod Schema validation for all inputs
+- SQL injection protection (ORM parameterized queries)
+- XSS protection (React auto-escaping)
 
 ---
 
-## 性能优化
+## Performance Optimization
 
-### 前端优化
+### Frontend Optimization
 
-- React Server Components（减少客户端 JS）
-- 代码分割（动态导入）
-- 图片优化（next/image）
-- 虚拟列表（长消息列表）
+- React Server Components (reduce client JS)
+- Code splitting (dynamic imports)
+- Image optimization (next/image)
+- Virtual lists (long message lists)
 
-### 后端优化
+### Backend Optimization
 
-- 数据库连接池
-- Redis 缓存热点数据
-- 流式响应（减少首字节时间）
-- 向量搜索索引（HNSW）
+- Database connection pooling
+- Redis caching for hot data
+- Streaming responses (reduce time to first byte)
+- Vector search indexing (HNSW)
 
-### 桌面版优化
+### Desktop Optimization
 
-- 懒加载模块
-- 本地缓存
-- 后台预加载
+- Lazy loading modules
+- Local caching
+- Background preloading

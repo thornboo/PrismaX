@@ -1,64 +1,65 @@
-# 测试规范
+# Testing Standards
 
-> 本文档描述 PrismaX 项目的测试策略与规范
-
----
-
-## 概述
-
-PrismaX 采用多层次测试策略，确保代码质量和功能稳定性。
+> This document describes the PrismaX testing strategy and standards
 
 ---
 
-## 测试金字塔
+## Overview
+
+PrismaX adopts a multi-layered testing strategy to ensure code quality and functional stability.
+
+---
+
+## Testing Pyramid
 
 ```
                     /\
                    /  \
                   / E2E \
-                 /  测试  \
+                 / Tests \
                 /----------\
-               /   集成测试   \
-              /----------------\
-             /      单元测试      \
-            /----------------------\
+               / Integration \
+              /    Tests      \
+             /------------------\
+            /    Unit Tests      \
+           /----------------------\
 ```
 
-| 测试类型 | 占比 | 执行频率 | 执行时间 |
-|----------|------|----------|----------|
-| 单元测试 | 70% | 每次提交 | 秒级 |
-| 集成测试 | 20% | 每次 PR | 分钟级 |
-| E2E 测试 | 10% | 每日/发布前 | 分钟级 |
+| Test Type | Proportion | Execution Frequency | Execution Time |
+|-----------|------------|---------------------|----------------|
+| Unit Tests | 70% | Every commit | Seconds |
+| Integration Tests | 20% | Every PR | Minutes |
+| E2E Tests | 10% | Daily/Pre-release | Minutes |
 
 ---
 
-## 测试工具
+## Testing Tools
 
-| 工具 | 用途 |
-|------|------|
-| Vitest | 单元测试、集成测试 |
-| Playwright | E2E 测试 |
-| Testing Library | React 组件测试 |
-| MSW | API Mock |
-| Faker | 测试数据生成 |
+| Tool | Purpose |
+|------|---------|
+| Vitest | Unit tests, integration tests |
+| Playwright | E2E tests |
+| Testing Library | React component tests |
+| MSW | API mocking |
+| Faker | Test data generation |
 
 ---
 
-## 单元测试
+## Unit Tests
 
-### 文件命名
+### File Naming
 
 ```
 src/
 ├── utils/
 │   ├── format.ts
-│   └── format.test.ts      # 单元测试文件
+│   └── format.test.ts      # Unit test file
 ├── hooks/
 │   ├── useChat.ts
 │   └── useChat.test.ts
 ```
 
-### 测试结构
+### Test Structure
 
 ```typescript
 // format.test.ts
@@ -67,7 +68,7 @@ import { formatDate, formatFileSize, truncateText } from './format';
 
 describe('formatDate', () => {
   beforeEach(() => {
-    // 固定时间，确保测试稳定
+    // Fix time for stable tests
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-15T10:00:00Z'));
   });
@@ -128,7 +129,7 @@ describe('truncateText', () => {
 });
 ```
 
-### 异步测试
+### Async Tests
 
 ```typescript
 // api.test.ts
@@ -166,7 +167,7 @@ describe('fetchUserData', () => {
 });
 ```
 
-### Mock 使用
+### Mock Usage
 
 ```typescript
 // service.test.ts
@@ -174,7 +175,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChatService } from './chat-service';
 import { AIProvider } from './ai-provider';
 
-// Mock 模块
+// Mock module
 vi.mock('./ai-provider', () => ({
   AIProvider: vi.fn().mockImplementation(() => ({
     chat: vi.fn(),
@@ -208,9 +209,9 @@ describe('ChatService', () => {
 
 ---
 
-## 组件测试
+## Component Tests
 
-### React 组件测试
+### React Component Tests
 
 ```typescript
 // ChatInput.test.tsx
@@ -279,7 +280,7 @@ describe('ChatInput', () => {
 });
 ```
 
-### Hook 测试
+### Hook Tests
 
 ```typescript
 // useChat.test.ts
@@ -339,7 +340,7 @@ describe('useChat', () => {
 });
 ```
 
-### Store 测试
+### Store Tests
 
 ```typescript
 // chatStore.test.ts
@@ -348,7 +349,7 @@ import { useChatStore } from './chatStore';
 
 describe('chatStore', () => {
   beforeEach(() => {
-    // 重置 store 状态
+    // Reset store state
     useChatStore.setState({
       conversations: [],
       activeConversationId: null,
@@ -401,150 +402,9 @@ describe('chatStore', () => {
 
 ---
 
-## 集成测试
+## E2E Tests
 
-### API 集成测试
-
-```typescript
-// api.integration.test.ts
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createServer } from '../server';
-import { createTRPCClient } from '@trpc/client';
-
-describe('API Integration', () => {
-  let server: ReturnType<typeof createServer>;
-  let client: ReturnType<typeof createTRPCClient>;
-
-  beforeAll(async () => {
-    server = createServer({ port: 0 }); // 随机端口
-    await server.start();
-    client = createTRPCClient({
-      url: `http://localhost:${server.port}/api/trpc`,
-    });
-  });
-
-  afterAll(async () => {
-    await server.stop();
-  });
-
-  describe('conversation', () => {
-    it('should create and retrieve conversation', async () => {
-      // 创建会话
-      const created = await client.conversation.create.mutate({
-        title: 'Test Conversation',
-      });
-
-      expect(created.id).toBeDefined();
-      expect(created.title).toBe('Test Conversation');
-
-      // 获取会话列表
-      const list = await client.conversation.list.query({});
-
-      expect(list.items).toContainEqual(
-        expect.objectContaining({ id: created.id })
-      );
-    });
-
-    it('should update conversation', async () => {
-      const created = await client.conversation.create.mutate({
-        title: 'Original',
-      });
-
-      const updated = await client.conversation.update.mutate({
-        id: created.id,
-        title: 'Updated',
-      });
-
-      expect(updated.title).toBe('Updated');
-    });
-
-    it('should delete conversation', async () => {
-      const created = await client.conversation.create.mutate({
-        title: 'To Delete',
-      });
-
-      await client.conversation.delete.mutate({ id: created.id });
-
-      const list = await client.conversation.list.query({});
-      expect(list.items).not.toContainEqual(
-        expect.objectContaining({ id: created.id })
-      );
-    });
-  });
-});
-```
-
-### 数据库集成测试
-
-```typescript
-// database.integration.test.ts
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
-import { db, schema } from '../database';
-import { eq } from 'drizzle-orm';
-
-describe('Database Integration', () => {
-  beforeEach(async () => {
-    // 清理测试数据
-    await db.delete(schema.messages);
-    await db.delete(schema.conversations);
-  });
-
-  afterAll(async () => {
-    await db.$client.end();
-  });
-
-  it('should insert and query conversation', async () => {
-    const [inserted] = await db
-      .insert(schema.conversations)
-      .values({
-        title: 'Test',
-        userId: 'test-user',
-      })
-      .returning();
-
-    const [found] = await db
-      .select()
-      .from(schema.conversations)
-      .where(eq(schema.conversations.id, inserted.id));
-
-    expect(found.title).toBe('Test');
-  });
-
-  it('should cascade delete messages when conversation deleted', async () => {
-    // 创建会话
-    const [conversation] = await db
-      .insert(schema.conversations)
-      .values({ title: 'Test', userId: 'test-user' })
-      .returning();
-
-    // 创建消息
-    await db.insert(schema.messages).values({
-      conversationId: conversation.id,
-      role: 'user',
-      content: 'Hello',
-    });
-
-    // 删除会话
-    await db
-      .delete(schema.conversations)
-      .where(eq(schema.conversations.id, conversation.id));
-
-    // 验证消息也被删除
-    const messages = await db
-      .select()
-      .from(schema.messages)
-      .where(eq(schema.messages.conversationId, conversation.id));
-
-    expect(messages).toHaveLength(0);
-  });
-});
-```
-
----
-
-## E2E 测试
-
-### Playwright 配置
+### Playwright Configuration
 
 ```typescript
 // playwright.config.ts
@@ -584,7 +444,7 @@ export default defineConfig({
 });
 ```
 
-### E2E 测试用例
+### E2E Test Cases
 
 ```typescript
 // e2e/chat.spec.ts
@@ -596,57 +456,57 @@ test.describe('Chat', () => {
   });
 
   test('should create new conversation', async ({ page }) => {
-    // 点击新建会话按钮
+    // Click new conversation button
     await page.click('[data-testid="new-conversation"]');
 
-    // 验证新会话创建
+    // Verify new conversation created
     await expect(page.locator('[data-testid="conversation-item"]')).toHaveCount(
       1
     );
   });
 
   test('should send message and receive response', async ({ page }) => {
-    // 创建新会话
+    // Create new conversation
     await page.click('[data-testid="new-conversation"]');
 
-    // 输入消息
+    // Input message
     const input = page.locator('[data-testid="chat-input"]');
     await input.fill('Hello, how are you?');
 
-    // 发送消息
+    // Send message
     await page.click('[data-testid="send-button"]');
 
-    // 验证用户消息显示
+    // Verify user message displayed
     await expect(page.locator('[data-testid="user-message"]')).toContainText(
       'Hello, how are you?'
     );
 
-    // 等待 AI 响应
+    // Wait for AI response
     await expect(page.locator('[data-testid="assistant-message"]')).toBeVisible(
       { timeout: 30000 }
     );
   });
 
   test('should regenerate message', async ({ page }) => {
-    // 创建会话并发送消息
+    // Create conversation and send message
     await page.click('[data-testid="new-conversation"]');
     await page.locator('[data-testid="chat-input"]').fill('Test message');
     await page.click('[data-testid="send-button"]');
 
-    // 等待响应
+    // Wait for response
     await expect(
       page.locator('[data-testid="assistant-message"]')
     ).toBeVisible();
 
-    // 点击重新生成
+    // Click regenerate
     await page.click('[data-testid="regenerate-button"]');
 
-    // 验证正在生成
+    // Verify generating
     await expect(page.locator('[data-testid="loading-indicator"]')).toBeVisible();
   });
 
   test('should switch between conversations', async ({ page }) => {
-    // 创建两个会话
+    // Create two conversations
     await page.click('[data-testid="new-conversation"]');
     await page.locator('[data-testid="chat-input"]').fill('First conversation');
     await page.click('[data-testid="send-button"]');
@@ -655,10 +515,10 @@ test.describe('Chat', () => {
     await page.locator('[data-testid="chat-input"]').fill('Second conversation');
     await page.click('[data-testid="send-button"]');
 
-    // 切换到第一个会话
+    // Switch to first conversation
     await page.click('[data-testid="conversation-item"]:first-child');
 
-    // 验证显示第一个会话的消息
+    // Verify first conversation messages displayed
     await expect(page.locator('[data-testid="user-message"]')).toContainText(
       'First conversation'
     );
@@ -666,126 +526,11 @@ test.describe('Chat', () => {
 });
 ```
 
-### 视觉回归测试
-
-```typescript
-// e2e/visual.spec.ts
-import { test, expect } from '@playwright/test';
-
-test.describe('Visual Regression', () => {
-  test('chat page should match snapshot', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    await expect(page).toHaveScreenshot('chat-page.png', {
-      maxDiffPixels: 100,
-    });
-  });
-
-  test('settings page should match snapshot', async ({ page }) => {
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
-
-    await expect(page).toHaveScreenshot('settings-page.png', {
-      maxDiffPixels: 100,
-    });
-  });
-
-  test('dark mode should match snapshot', async ({ page }) => {
-    await page.goto('/');
-    await page.click('[data-testid="theme-toggle"]');
-    await page.waitForTimeout(500); // 等待主题切换动画
-
-    await expect(page).toHaveScreenshot('chat-page-dark.png', {
-      maxDiffPixels: 100,
-    });
-  });
-});
-```
-
 ---
 
-## Mock 服务
+## Test Coverage
 
-### MSW 配置
-
-```typescript
-// mocks/handlers.ts
-import { http, HttpResponse } from 'msw';
-
-export const handlers = [
-  // 模拟聊天 API
-  http.post('/api/chat', async ({ request }) => {
-    const body = await request.json();
-
-    return HttpResponse.json({
-      id: 'msg-1',
-      role: 'assistant',
-      content: `Echo: ${body.message}`,
-    });
-  }),
-
-  // 模拟流式响应
-  http.post('/api/chat/stream', () => {
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        const chunks = ['Hello', ' ', 'World', '!'];
-        chunks.forEach((chunk, i) => {
-          setTimeout(() => {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`)
-            );
-            if (i === chunks.length - 1) {
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-              controller.close();
-            }
-          }, i * 100);
-        });
-      },
-    });
-
-    return new HttpResponse(stream, {
-      headers: { 'Content-Type': 'text/event-stream' },
-    });
-  }),
-
-  // 模拟知识库搜索
-  http.post('/api/knowledge/search', async ({ request }) => {
-    const body = await request.json();
-
-    return HttpResponse.json({
-      results: [
-        {
-          content: `Relevant content for: ${body.query}`,
-          score: 0.95,
-          documentId: 'doc-1',
-        },
-      ],
-    });
-  }),
-];
-```
-
-### 测试中使用 MSW
-
-```typescript
-// setup.ts
-import { setupServer } from 'msw/node';
-import { handlers } from './mocks/handlers';
-
-export const server = setupServer(...handlers);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-```
-
----
-
-## 测试覆盖率
-
-### 配置
+### Configuration
 
 ```typescript
 // vitest.config.ts
@@ -815,79 +560,23 @@ export default defineConfig({
 });
 ```
 
-### 覆盖率要求
+### Coverage Requirements
 
-| 指标 | 最低要求 | 目标 |
-|------|----------|------|
-| 行覆盖率 | 80% | 90% |
-| 函数覆盖率 | 80% | 90% |
-| 分支覆盖率 | 80% | 85% |
-| 语句覆盖率 | 80% | 90% |
-
----
-
-## CI 集成
-
-### GitHub Actions
-
-```yaml
-# .github/workflows/test.yml
-name: Test
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-
-jobs:
-  unit-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - run: pnpm install
-      - run: pnpm test:unit
-      - run: pnpm test:coverage
-
-      - uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/coverage-final.json
-
-  e2e-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - run: pnpm install
-      - run: pnpm exec playwright install --with-deps
-      - run: pnpm test:e2e
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
-```
+| Metric | Minimum | Target |
+|--------|---------|--------|
+| Line coverage | 80% | 90% |
+| Function coverage | 80% | 90% |
+| Branch coverage | 80% | 85% |
+| Statement coverage | 80% | 90% |
 
 ---
 
-## 测试最佳实践
+## Testing Best Practices
 
-### 命名规范
+### Naming Conventions
 
 ```typescript
-// 使用描述性的测试名称
+// Use descriptive test names
 describe('ChatService', () => {
   describe('sendMessage', () => {
     it('should return response when API call succeeds', () => {});
@@ -897,45 +586,45 @@ describe('ChatService', () => {
 });
 ```
 
-### AAA 模式
+### AAA Pattern
 
 ```typescript
 it('should add item to cart', () => {
-  // Arrange - 准备
+  // Arrange
   const cart = new Cart();
   const item = { id: '1', name: 'Product', price: 100 };
 
-  // Act - 执行
+  // Act
   cart.addItem(item);
 
-  // Assert - 断言
+  // Assert
   expect(cart.items).toContain(item);
   expect(cart.total).toBe(100);
 });
 ```
 
-### 避免测试实现细节
+### Avoid Testing Implementation Details
 
 ```typescript
-// 不好的做法 - 测试实现细节
+// Bad - testing implementation details
 it('should set isLoading to true', () => {
   component.handleClick();
   expect(component.state.isLoading).toBe(true);
 });
 
-// 好的做法 - 测试行为
+// Good - testing behavior
 it('should show loading indicator when clicked', async () => {
   await userEvent.click(screen.getByRole('button'));
   expect(screen.getByTestId('loading')).toBeVisible();
 });
 ```
 
-### 测试隔离
+### Test Isolation
 
 ```typescript
-// 每个测试应该独立运行
+// Each test should run independently
 beforeEach(() => {
-  // 重置状态
+  // Reset state
   vi.clearAllMocks();
   localStorage.clear();
 });

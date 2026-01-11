@@ -1,32 +1,33 @@
-# 安全设计
+# Security Design
 
-> 本文档描述 PrismaX 的安全架构设计
-
----
-
-## 概述
-
-安全是 PrismaX 的核心关注点之一，涉及用户数据保护、API 密钥管理、网络通信安全、插件沙箱等多个方面。
+> This document describes the PrismaX security architecture design
 
 ---
 
-## 安全架构
+## Overview
+
+Security is one of PrismaX's core concerns, involving user data protection, API key management, network communication security, plugin sandboxing, and more.
+
+---
+
+## Security Architecture
 
 ```
 +-------------------------------------------------------------------------+
-|                           PrismaX 安全架构                               |
+|                           PrismaX Security Architecture                  |
 +-------------------------------------------------------------------------+
 |                                                                         |
 |  +-------------------+     +-------------------+     +-------------------+
-|  |   认证授权层       |     |   数据加密层       |     |   访问控制层      |
-|  |   (Auth)          |     |   (Encryption)    |     |   (ACL)          |
+|  |  Auth Layer       |     |  Encryption Layer |     |  Access Control   |
+|  |                   |     |                   |     |  Layer (ACL)      |
 |  +-------------------+     +-------------------+     +-------------------+
 |           |                        |                        |           |
 |           v                        v                        v           |
 |  +-------------------------------------------------------------------+  |
-|  |                         安全中间件层                                |  |
+|  |                      Security Middleware Layer                    |  |
 |  |  +-------------+  +-------------+  +-------------+  +-------------+ |
-|  |  | 输入验证    |  | 速率限制    |  | 审计日志    |  | 异常检测    | |
+|  |  | Input       |  | Rate        |  | Audit       |  | Anomaly     | |
+|  |  | Validation  |  | Limiting    |  | Logging     |  | Detection   | |
 |  |  +-------------+  +-------------+  +-------------+  +-------------+ |
 |  +-------------------------------------------------------------------+  |
 |                                                                         |
@@ -35,9 +36,9 @@
 
 ---
 
-## 认证与授权
+## Authentication & Authorization
 
-### Web 版认证
+### Web Version Authentication
 
 ```typescript
 // auth/jwt.ts
@@ -60,7 +61,7 @@ class JWTService {
       email: user.email,
       role: user.role,
       iat: Math.floor(Date.now() / 1000),
-      exp: 0, // 由 jwt.sign 设置
+      exp: 0, // Set by jwt.sign
     };
 
     const accessToken = jwt.sign(payload, this.secret, {
@@ -87,7 +88,7 @@ class JWTService {
   async refreshAccessToken(refreshToken: string): Promise<string> {
     const payload = this.verifyToken(refreshToken);
 
-    // 检查是否在黑名单中
+    // Check if blacklisted
     if (await this.isTokenBlacklisted(refreshToken)) {
       throw new AuthenticationError('Token has been revoked');
     }
@@ -107,7 +108,7 @@ class JWTService {
 }
 ```
 
-### 密码安全
+### Password Security
 
 ```typescript
 // auth/password.ts
@@ -160,9 +161,9 @@ class PasswordService {
 }
 ```
 
-### 桌面版认证
+### Desktop Version Authentication
 
-桌面版为单用户模式，使用本地密钥保护：
+Desktop version is single-user mode, using local key protection:
 
 ```typescript
 // desktop/auth.ts
@@ -217,9 +218,9 @@ class DesktopAuth {
 
 ---
 
-## API 密钥管理
+## API Key Management
 
-### 密钥加密存储
+### Encrypted Key Storage
 
 ```typescript
 // security/key-manager.ts
@@ -264,19 +265,19 @@ class APIKeyManager {
 }
 ```
 
-### 密钥轮换
+### Key Rotation
 
 ```typescript
 // security/key-rotation.ts
 class KeyRotationService {
   async rotateKeys(): Promise<void> {
-    // 1. 生成新的主密钥
+    // 1. Generate new master key
     const newMasterKey = crypto.randomBytes(32);
 
-    // 2. 获取所有加密的 API 密钥
+    // 2. Get all encrypted API keys
     const encryptedKeys = await db.select().from(apiKeys);
 
-    // 3. 使用旧密钥解密，新密钥重新加密
+    // 3. Decrypt with old key, re-encrypt with new key
     const oldManager = new APIKeyManager(this.currentMasterKey);
     const newManager = new APIKeyManager(newMasterKey);
 
@@ -294,7 +295,7 @@ class KeyRotationService {
         .where(eq(apiKeys.id, key.id));
     }
 
-    // 4. 更新主密钥
+    // 4. Update master key
     await this.updateMasterKey(newMasterKey);
   }
 }
@@ -302,11 +303,11 @@ class KeyRotationService {
 
 ---
 
-## 数据加密
+## Data Encryption
 
-### 传输加密
+### Transport Encryption
 
-所有网络通信使用 TLS 1.3：
+All network communication uses TLS 1.3:
 
 ```typescript
 // server/https.ts
@@ -322,12 +323,12 @@ const httpsOptions = {
 };
 ```
 
-### 静态数据加密
+### Data at Rest Encryption
 
 ```typescript
 // security/data-encryption.ts
 class DataEncryption {
-  // 敏感字段加密
+  // Sensitive field encryption
   encryptField(value: string, fieldKey: Buffer): string {
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', fieldKey, iv);
@@ -358,7 +359,7 @@ class DataEncryption {
 }
 ```
 
-### 数据库字段加密
+### Database Field Encryption
 
 ```typescript
 // database/encrypted-column.ts
@@ -379,26 +380,26 @@ const encryptedText = customType<{
   },
 });
 
-// 使用
+// Usage
 export const apiKeys = pgTable('api_keys', {
   id: uuid('id').primaryKey(),
   provider: varchar('provider', { length: 50 }).notNull(),
-  apiKey: encryptedText('api_key').notNull(), // 自动加密
+  apiKey: encryptedText('api_key').notNull(), // Auto-encrypted
   createdAt: timestamp('created_at').defaultNow(),
 });
 ```
 
 ---
 
-## 输入验证
+## Input Validation
 
-### Schema 验证
+### Schema Validation
 
 ```typescript
 // validation/schemas.ts
 import { z } from 'zod';
 
-// 消息输入验证
+// Message input validation
 export const messageSchema = z.object({
   content: z
     .string()
@@ -412,7 +413,7 @@ export const messageSchema = z.object({
   model: z.string().optional(),
 });
 
-// 文件上传验证
+// File upload validation
 export const fileUploadSchema = z.object({
   filename: z
     .string()
@@ -431,7 +432,7 @@ export const fileUploadSchema = z.object({
   size: z.number().max(50 * 1024 * 1024), // 50MB
 });
 
-// URL 验证
+// URL validation
 export const urlSchema = z
   .string()
   .url()
@@ -444,7 +445,7 @@ export const urlSchema = z
   );
 ```
 
-### XSS 防护
+### XSS Protection
 
 ```typescript
 // security/xss.ts
@@ -480,18 +481,18 @@ class XSSProtection {
 }
 ```
 
-### SQL 注入防护
+### SQL Injection Protection
 
-使用参数化查询（Drizzle ORM 自动处理）：
+Using parameterized queries (Drizzle ORM handles automatically):
 
 ```typescript
-// 安全的查询方式
+// Safe query method
 const messages = await db
   .select()
   .from(messagesTable)
   .where(eq(messagesTable.conversationId, conversationId));
 
-// 禁止的方式（原始 SQL 拼接）
+// Prohibited method (raw SQL concatenation)
 // const messages = await db.execute(
 //   `SELECT * FROM messages WHERE conversation_id = '${conversationId}'`
 // );
@@ -499,9 +500,9 @@ const messages = await db
 
 ---
 
-## 速率限制
+## Rate Limiting
 
-### 实现
+### Implementation
 
 ```typescript
 // middleware/rate-limit.ts
@@ -510,11 +511,11 @@ import { Redis } from '@upstash/redis';
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(100, '1 m'), // 每分钟 100 次
+  limiter: Ratelimit.slidingWindow(100, '1 m'), // 100 per minute
   analytics: true,
 });
 
-// 不同端点的限制
+// Different limits for different endpoints
 const rateLimits = {
   'message.send': { requests: 20, window: '1 m' },
   'knowledge.upload': { requests: 10, window: '1 h' },
@@ -551,9 +552,9 @@ async function rateLimitMiddleware(
 
 ---
 
-## 插件安全
+## Plugin Security
 
-### 沙箱隔离
+### Sandbox Isolation
 
 ```typescript
 // plugins/sandbox.ts
@@ -573,24 +574,24 @@ class PluginSandbox {
 
   private createSandbox(permissions: PluginPermissions) {
     return {
-      // 安全的 console
+      // Safe console
       console: {
         log: (...args: unknown[]) => this.safeLog('log', args),
         warn: (...args: unknown[]) => this.safeLog('warn', args),
         error: (...args: unknown[]) => this.safeLog('error', args),
       },
 
-      // 受限的 fetch
+      // Restricted fetch
       fetch: permissions.network
         ? this.createSafeFetch(permissions.allowedDomains)
         : undefined,
 
-      // 受限的存储
+      // Restricted storage
       storage: permissions.storage
         ? this.createSafeStorage(permissions.storageQuota)
         : undefined,
 
-      // 禁止的全局对象
+      // Prohibited global objects
       process: undefined,
       require: undefined,
       module: undefined,
@@ -606,12 +607,12 @@ class PluginSandbox {
     return async (url: string, options?: RequestInit) => {
       const parsed = new URL(url);
 
-      // 检查域名白名单
+      // Check domain whitelist
       if (!allowedDomains.some((d) => parsed.hostname.endsWith(d))) {
         throw new Error(`Domain ${parsed.hostname} is not allowed`);
       }
 
-      // 禁止访问内网
+      // Prohibit private network access
       if (this.isPrivateIP(parsed.hostname)) {
         throw new Error('Access to private networks is not allowed');
       }
@@ -642,24 +643,24 @@ class PluginSandbox {
 }
 ```
 
-### 权限系统
+### Permission System
 
 ```typescript
 // plugins/permissions.ts
 interface PluginPermissions {
-  // 网络权限
+  // Network permissions
   network: boolean;
   allowedDomains: string[];
 
-  // 存储权限
+  // Storage permissions
   storage: boolean;
   storageQuota: number; // bytes
 
-  // 文件系统权限
+  // Filesystem permissions
   filesystem: boolean;
   allowedPaths: string[];
 
-  // 系统权限
+  // System permissions
   clipboard: boolean;
   notifications: boolean;
 }
@@ -669,13 +670,13 @@ class PermissionManager {
     pluginId: string,
     permission: keyof PluginPermissions
   ): Promise<boolean> {
-    // 检查是否已授权
+    // Check if already granted
     const granted = await this.getGrantedPermissions(pluginId);
     if (granted.includes(permission)) {
       return true;
     }
 
-    // 请求用户授权
+    // Request user authorization
     const approved = await this.showPermissionDialog(pluginId, permission);
     if (approved) {
       await this.grantPermission(pluginId, permission);
@@ -702,9 +703,9 @@ class PermissionManager {
 
 ---
 
-## 审计日志
+## Audit Logging
 
-### 日志记录
+### Log Recording
 
 ```typescript
 // audit/logger.ts
@@ -730,10 +731,10 @@ class AuditLogger {
       ...event,
     };
 
-    // 写入数据库
+    // Write to database
     await db.insert(auditLogs).values(log);
 
-    // 敏感操作发送告警
+    // Send alert for sensitive operations
     if (this.isSensitiveAction(event.action)) {
       await this.sendAlert(log);
     }
@@ -773,47 +774,47 @@ class AuditLogger {
 }
 ```
 
-### 审计事件
+### Audit Events
 
-| 事件类型 | 说明 |
-|----------|------|
-| `auth.login` | 用户登录 |
-| `auth.logout` | 用户登出 |
-| `auth.passwordChange` | 密码修改 |
-| `apiKey.create` | 创建 API 密钥 |
-| `apiKey.delete` | 删除 API 密钥 |
-| `conversation.delete` | 删除会话 |
-| `knowledge.upload` | 上传知识库文档 |
-| `plugin.install` | 安装插件 |
-| `settings.update` | 更新设置 |
-| `data.export` | 导出数据 |
+| Event Type | Description |
+|------------|-------------|
+| `auth.login` | User login |
+| `auth.logout` | User logout |
+| `auth.passwordChange` | Password change |
+| `apiKey.create` | Create API key |
+| `apiKey.delete` | Delete API key |
+| `conversation.delete` | Delete conversation |
+| `knowledge.upload` | Upload knowledge base document |
+| `plugin.install` | Install plugin |
+| `settings.update` | Update settings |
+| `data.export` | Export data |
 
 ---
 
-## 安全配置
+## Security Configuration
 
-### 环境变量
+### Environment Variables
 
 ```bash
 # .env.example
 
-# 加密密钥（必须保密）
+# Encryption keys (must be kept secret)
 ENCRYPTION_KEY=your-32-byte-encryption-key-here
 JWT_SECRET=your-jwt-secret-key-here
 
-# 数据库（使用 SSL）
+# Database (use SSL)
 DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require
 
-# Redis（使用 TLS）
+# Redis (use TLS)
 REDIS_URL=rediss://user:pass@host:6379
 
-# 安全配置
+# Security configuration
 CORS_ORIGINS=https://app.prismax.com
 RATE_LIMIT_ENABLED=true
 AUDIT_LOG_ENABLED=true
 ```
 
-### 安全头配置
+### Security Headers Configuration
 
 ```typescript
 // middleware/security-headers.ts
@@ -837,28 +838,28 @@ const securityHeaders = {
 
 ---
 
-## 安全检查清单
+## Security Checklist
 
-### 开发阶段
+### Development Phase
 
-- [ ] 所有用户输入经过验证和清理
-- [ ] 敏感数据加密存储
-- [ ] API 密钥不硬编码在代码中
-- [ ] 使用参数化查询防止 SQL 注入
-- [ ] 实现适当的错误处理，不泄露敏感信息
+- [ ] All user input validated and sanitized
+- [ ] Sensitive data encrypted at rest
+- [ ] API keys not hardcoded in source
+- [ ] Parameterized queries to prevent SQL injection
+- [ ] Proper error handling without leaking sensitive info
 
-### 部署阶段
+### Deployment Phase
 
-- [ ] 启用 HTTPS
-- [ ] 配置安全头
-- [ ] 启用速率限制
-- [ ] 配置 CORS
-- [ ] 启用审计日志
+- [ ] HTTPS enabled
+- [ ] Security headers configured
+- [ ] Rate limiting enabled
+- [ ] CORS configured
+- [ ] Audit logging enabled
 
-### 运维阶段
+### Operations Phase
 
-- [ ] 定期轮换密钥
-- [ ] 监控异常访问
-- [ ] 定期安全审计
-- [ ] 及时更新依赖
-- [ ] 备份加密数据
+- [ ] Regular key rotation
+- [ ] Monitor for anomalous access
+- [ ] Regular security audits
+- [ ] Timely dependency updates
+- [ ] Encrypted data backups

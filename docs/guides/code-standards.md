@@ -1,114 +1,114 @@
-# 代码规范
+# Code Standards
 
-> 本文档描述 PrismaX 项目的代码风格与规范
+> This document describes the PrismaX code style and standards
 
 ---
 
-## 通用规范
+## General Standards
 
-### 语言规范
+### Language Standards
 
-项目采用 **全英文化** 策略，确保国际化和代码一致性：
+The project adopts an **English-only** strategy to ensure internationalization and code consistency:
 
-| 内容 | 语言要求 | 示例 |
-|------|----------|------|
-| 代码注释 | 英文 | `// Initialize the chat store` |
-| TODO/FIXME | 英文 | `// TODO: Add pagination support` |
-| 变量/函数名 | 英文 | `getUserById`, `messageList` |
-| 提交信息 | 英文 | `feat(chat): add message editing` |
-| 文档（docs/） | 中文 | 面向中文开发者 |
-| README.md | 英文 | 项目主文档 |
-| docs/zh/README.md | 中文 | 中文版 README |
+| Content | Language Requirement | Example |
+|---------|---------------------|---------|
+| Code comments | English | `// Initialize the chat store` |
+| TODO/FIXME | English | `// TODO: Add pagination support` |
+| Variable/function names | English | `getUserById`, `messageList` |
+| Commit messages | English | `feat(chat): add message editing` |
+| Documentation (docs/) | English | For global developers |
+| README.md | English | Main project documentation |
+| docs/zh/README.md | Chinese | Chinese README |
 
-### 文件命名
+### File Naming
 
-| 类型 | 命名规范 | 示例 |
-|------|----------|------|
-| React 组件 | PascalCase | `ChatMessage.tsx` |
-| 工具函数 | camelCase | `formatDate.ts` |
-| 常量文件 | camelCase | `constants.ts` |
-| 类型定义 | camelCase | `types.ts` |
-| 样式文件 | 与组件同名 | `ChatMessage.module.css` |
-| 测试文件 | 与源文件同名 + .test | `formatDate.test.ts` |
+| Type | Naming Convention | Example |
+|------|-------------------|---------|
+| React components | PascalCase | `ChatMessage.tsx` |
+| Utility functions | camelCase | `formatDate.ts` |
+| Constants file | camelCase | `constants.ts` |
+| Type definitions | camelCase | `types.ts` |
+| Style files | Same as component | `ChatMessage.module.css` |
+| Test files | Same as source + .test | `formatDate.test.ts` |
 
-### 目录结构
+### Directory Structure
 
 ```
 src/
-├── components/          # React 组件
+├── components/          # React components
 │   ├── ChatMessage/
-│   │   ├── index.tsx    # 组件入口
+│   │   ├── index.tsx    # Component entry
 │   │   ├── ChatMessage.tsx
 │   │   ├── ChatMessage.test.tsx
 │   │   └── types.ts
 │   └── ...
-├── hooks/               # 自定义 Hooks
-├── lib/                 # 工具库
-├── stores/              # 状态管理
-├── types/               # 类型定义
-└── utils/               # 工具函数
+├── hooks/               # Custom Hooks
+├── lib/                 # Utility libraries
+├── stores/              # State management
+├── types/               # Type definitions
+└── utils/               # Utility functions
 ```
 
 ---
 
-## TypeScript 规范
+## TypeScript Standards
 
-### 类型定义
+### Type Definitions
 
 ```typescript
-// 使用 interface 定义对象类型
+// Use interface for object types
 interface User {
   id: string;
   name: string;
   email: string;
 }
 
-// 使用 type 定义联合类型、交叉类型
+// Use type for union types, intersection types
 type Status = 'pending' | 'success' | 'error';
 type UserWithRole = User & { role: string };
 
-// 避免使用 any，使用 unknown 代替
+// Avoid using any, use unknown instead
 function parseJSON(json: string): unknown {
   return JSON.parse(json);
 }
 
-// 使用泛型提高复用性
+// Use generics for reusability
 function getFirst<T>(arr: T[]): T | undefined {
   return arr[0];
 }
 ```
 
-### 命名规范
+### Naming Conventions
 
 ```typescript
-// 接口名使用 PascalCase
-interface UserProfile {}
+// Interface names use PascalCase
+interface UserProfile
 
-// 类型别名使用 PascalCase
+// Type aliases use PascalCase
 type MessageType = 'text' | 'image';
 
-// 枚举使用 PascalCase，成员使用 PascalCase
+// Enums use PascalCase, members use PascalCase
 enum MessageRole {
   User = 'user',
   Assistant = 'assistant',
   System = 'system',
 }
 
-// 常量使用 UPPER_SNAKE_CASE
+// Constants use UPPER_SNAKE_CASE
 const MAX_MESSAGE_LENGTH = 10000;
 
-// 函数和变量使用 camelCase
+// Functions and variables use camelCase
 const getUserById = (id: string) => {};
 ```
 
 ---
 
-## React 规范
+## React Standards
 
-### 组件定义
+### Component Definition
 
 ```tsx
-// 使用函数组件 + TypeScript
+// Use function components + TypeScript
 interface ChatMessageProps {
   message: Message;
   onEdit?: (id: string) => void;
@@ -116,11 +116,11 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message, onEdit, onDelete }: ChatMessageProps) {
-  // 组件逻辑
+  // Component logic
   return <div>{/* JSX */}</div>;
 }
 
-// 使用 forwardRef 时
+// When using forwardRef
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
 }
@@ -137,22 +137,22 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 );
 ```
 
-### Hooks 使用
+### Hooks Usage
 
 ```tsx
-// 自定义 Hook 以 use 开头
+// Custom Hooks start with use
 function useConversation(id: string) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 加载数据
+    // Load data
   }, [id]);
 
   return { conversation, loading };
 }
 
-// 避免在条件语句中使用 Hooks
+// Avoid using Hooks in conditional statements
 // Bad
 if (condition) {
   const [state, setState] = useState();
@@ -161,18 +161,18 @@ if (condition) {
 // Good
 const [state, setState] = useState();
 if (condition) {
-  // 使用 state
+  // Use state
 }
 ```
 
-### 事件处理
+### Event Handling
 
 ```tsx
-// 事件处理函数以 handle 开头
+// Event handlers start with handle
 function ChatInput() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // 处理提交
+    // Handle submit
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -191,17 +191,17 @@ function ChatInput() {
 
 ---
 
-## 样式规范
+## Styling Standards
 
 ### Tailwind CSS
 
 ```tsx
-// 使用 Tailwind 类名
+// Use Tailwind class names
 <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow">
   <span className="text-sm text-gray-500">Hello</span>
 </div>
 
-// 使用 cn 工具函数合并类名
+// Use cn utility function to merge class names
 import { cn } from '@/lib/utils';
 
 <button
@@ -216,10 +216,10 @@ import { cn } from '@/lib/utils';
 </button>
 ```
 
-### CSS 变量
+### CSS Variables
 
 ```css
-/* 使用 CSS 变量定义主题 */
+/* Use CSS variables for theming */
 :root {
   --background: 0 0% 100%;
   --foreground: 0 0% 3.9%;
@@ -237,7 +237,7 @@ import { cn } from '@/lib/utils';
 
 ---
 
-## 状态管理规范
+## State Management Standards
 
 ### Zustand Store
 
@@ -246,7 +246,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface ChatStore {
-  // 状态
+  // State
   conversations: Conversation[];
   activeId: string | null;
 
@@ -283,11 +283,11 @@ export const useChatStore = create<ChatStore>()(
 
 ---
 
-## 注释规范
+## Comment Standards
 
-**所有注释必须使用英文。**
+**All comments must be in English.**
 
-### 文件头注释
+### File Header Comments
 
 ```typescript
 /**
@@ -297,7 +297,7 @@ export const useChatStore = create<ChatStore>()(
  */
 ```
 
-### 函数注释
+### Function Comments
 
 ```typescript
 /**
@@ -316,7 +316,7 @@ function formatRelativeTime(date: Date, locale = 'en-US'): string {
 }
 ```
 
-### TODO 注释
+### TODO Comments
 
 ```typescript
 // TODO: Implement message pagination
@@ -327,9 +327,9 @@ function formatRelativeTime(date: Date, locale = 'en-US'): string {
 
 ---
 
-## 测试规范
+## Testing Standards
 
-### 单元测试
+### Unit Tests
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -349,7 +349,7 @@ describe('formatRelativeTime', () => {
 });
 ```
 
-### 组件测试
+### Component Tests
 
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -371,9 +371,9 @@ describe('ChatInput', () => {
 
 ---
 
-## ESLint 配置
+## ESLint Configuration
 
-项目使用以下 ESLint 规则：
+The project uses the following ESLint rules:
 
 ```javascript
 // eslint.config.js
@@ -405,7 +405,7 @@ export default [
 
 ---
 
-## Prettier 配置
+## Prettier Configuration
 
 ```json
 {

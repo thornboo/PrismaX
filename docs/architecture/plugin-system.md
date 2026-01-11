@@ -1,35 +1,35 @@
-# 插件系统设计
+# Plugin System Design
 
-> 本文档描述 PrismaX 的插件系统架构设计
-
----
-
-## 概述
-
-插件系统允许第三方开发者扩展 PrismaX 的功能，包括：
-
-- 自定义工具（Tool）
-- 自定义模型提供商
-- 自定义 UI 组件
-- 自定义数据处理器
+> This document describes the PrismaX plugin system architecture design
 
 ---
 
-## 插件架构
+## Overview
+
+The plugin system allows third-party developers to extend PrismaX functionality, including:
+
+- Custom tools
+- Custom model providers
+- Custom UI components
+- Custom data processors
+
+---
+
+## Plugin Architecture
 
 ```
 +-------------------------------------------------------------------------+
-|                           PrismaX 插件系统                               |
+|                           PrismaX Plugin System                          |
 +-------------------------------------------------------------------------+
 |                                                                         |
 |  +-------------------+     +-------------------+     +-------------------+
-|  |   插件注册表       |     |   插件加载器       |     |   插件沙箱        |
-|  |   (Registry)      |     |   (Loader)        |     |   (Sandbox)       |
+|  |  Plugin Registry  |     |  Plugin Loader    |     |  Plugin Sandbox   |
+|  |                   |     |                   |     |                   |
 |  +-------------------+     +-------------------+     +-------------------+
 |           |                        |                        |           |
 |           v                        v                        v           |
 |  +-------------------------------------------------------------------+  |
-|  |                         插件 API 层                                |  |
+|  |                         Plugin API Layer                          |  |
 |  |  +-------------+  +-------------+  +-------------+  +-------------+ |
 |  |  | Tool API    |  | Model API   |  | UI API      |  | Data API    | |
 |  |  +-------------+  +-------------+  +-------------+  +-------------+ |
@@ -40,9 +40,9 @@
 
 ---
 
-## 插件定义
+## Plugin Definition
 
-### 插件清单（manifest.json）
+### Plugin Manifest (manifest.json)
 
 ```json
 {
@@ -68,7 +68,7 @@
 }
 ```
 
-### 插件入口
+### Plugin Entry
 
 ```typescript
 // index.ts
@@ -83,7 +83,7 @@ export default class WebSearchPlugin implements Plugin {
   async onLoad(context: PluginContext): Promise<void> {
     this.context = context;
 
-    // 注册工具
+    // Register tool
     context.registerTool({
       name: 'web_search',
       description: 'Search the web for information',
@@ -105,14 +105,14 @@ export default class WebSearchPlugin implements Plugin {
       execute: this.executeSearch.bind(this),
     });
 
-    // 注册设置页面
+    // Register settings page
     context.registerSettings({
       component: () => import('./SettingsPage'),
     });
   }
 
   async onUnload(): Promise<void> {
-    // 清理资源
+    // Cleanup resources
   }
 
   private async executeSearch(params: {
@@ -120,48 +120,48 @@ export default class WebSearchPlugin implements Plugin {
     engine?: string;
   }): Promise<string> {
     const { query, engine = 'google' } = params;
-    // 执行搜索逻辑
+    // Execute search logic
     const results = await this.search(query, engine);
     return JSON.stringify(results);
   }
 
   private async search(query: string, engine: string) {
-    // 搜索实现
+    // Search implementation
   }
 }
 ```
 
 ---
 
-## 插件 API
+## Plugin API
 
 ### Tool API
 
 ```typescript
 interface ToolDefinition {
-  // 工具名称（唯一标识）
+  // Tool name (unique identifier)
   name: string;
 
-  // 工具描述（用于 AI 理解）
+  // Tool description (for AI understanding)
   description: string;
 
-  // 参数定义（JSON Schema）
+  // Parameter definition (JSON Schema)
   parameters: JSONSchema;
 
-  // 执行函数
+  // Execute function
   execute: (params: unknown) => Promise<string>;
 
-  // 可选：是否需要用户确认
+  // Optional: requires user confirmation
   requireConfirmation?: boolean;
 
-  // 可选：超时时间（毫秒）
+  // Optional: timeout in milliseconds
   timeout?: number;
 }
 
-// 注册工具
+// Register tool
 context.registerTool(tool: ToolDefinition): void;
 
-// 注销工具
+// Unregister tool
 context.unregisterTool(name: string): void;
 ```
 
@@ -169,16 +169,16 @@ context.unregisterTool(name: string): void;
 
 ```typescript
 interface ModelProviderDefinition {
-  // 提供商 ID
+  // Provider ID
   id: string;
 
-  // 显示名称
+  // Display name
   displayName: string;
 
-  // 图标
+  // Icon
   icon?: string;
 
-  // 支持的功能
+  // Supported capabilities
   capabilities: {
     chat: boolean;
     streaming: boolean;
@@ -186,14 +186,14 @@ interface ModelProviderDefinition {
     vision: boolean;
   };
 
-  // 创建客户端
+  // Create client
   createClient: (config: ProviderConfig) => AIProvider;
 
-  // 配置表单
+  // Configuration form
   configSchema: JSONSchema;
 }
 
-// 注册模型提供商
+// Register model provider
 context.registerModelProvider(provider: ModelProviderDefinition): void;
 ```
 
@@ -201,30 +201,30 @@ context.registerModelProvider(provider: ModelProviderDefinition): void;
 
 ```typescript
 interface UIExtension {
-  // 扩展点
+  // Extension slot
   slot: 'sidebar' | 'toolbar' | 'settings' | 'message-actions';
 
-  // 组件
+  // Component
   component: () => Promise<{ default: React.ComponentType }>;
 
-  // 优先级
+  // Priority
   priority?: number;
 }
 
-// 注册 UI 扩展
+// Register UI extension
 context.registerUIExtension(extension: UIExtension): void;
 
-// 显示通知
+// Show notification
 context.showNotification(options: NotificationOptions): void;
 
-// 显示对话框
+// Show dialog
 context.showDialog(options: DialogOptions): Promise<unknown>;
 ```
 
 ### Storage API
 
 ```typescript
-// 插件专用存储
+// Plugin-specific storage
 interface PluginStorage {
   get<T>(key: string): Promise<T | null>;
   set<T>(key: string, value: T): Promise<void>;
@@ -232,40 +232,40 @@ interface PluginStorage {
   clear(): Promise<void>;
 }
 
-// 获取存储实例
+// Get storage instance
 const storage = context.getStorage();
 ```
 
 ### Network API
 
 ```typescript
-// 网络请求（受沙箱限制）
+// Network requests (sandbox restricted)
 interface NetworkAPI {
   fetch(url: string, options?: RequestInit): Promise<Response>;
 }
 
-// 获取网络 API
+// Get network API
 const network = context.getNetwork();
 ```
 
 ---
 
-## 插件加载器
+## Plugin Loader
 
-### 加载流程
+### Loading Flow
 
 ```
-1. 扫描插件目录
-2. 读取 manifest.json
-3. 验证插件签名（可选）
-4. 检查权限
-5. 创建沙箱环境
-6. 加载插件代码
-7. 调用 onLoad
-8. 注册到插件注册表
+1. Scan plugin directory
+2. Read manifest.json
+3. Verify plugin signature (optional)
+4. Check permissions
+5. Create sandbox environment
+6. Load plugin code
+7. Call onLoad
+8. Register to plugin registry
 ```
 
-### 实现
+### Implementation
 
 ```typescript
 // plugins/loader.ts
@@ -274,31 +274,31 @@ class PluginLoader {
   private registry: PluginRegistry;
 
   async loadPlugin(pluginPath: string): Promise<void> {
-    // 1. 读取清单
+    // 1. Read manifest
     const manifest = await this.readManifest(pluginPath);
 
-    // 2. 验证
+    // 2. Validate
     await this.validatePlugin(manifest);
 
-    // 3. 检查权限
+    // 3. Check permissions
     const permissions = await this.checkPermissions(manifest);
     if (!permissions.granted) {
       throw new Error(`Plugin ${manifest.name} requires permissions: ${permissions.required}`);
     }
 
-    // 4. 创建上下文
+    // 4. Create context
     const context = this.createContext(manifest);
 
-    // 5. 加载代码
+    // 5. Load code
     const PluginClass = await this.loadCode(pluginPath, manifest);
 
-    // 6. 实例化
+    // 6. Instantiate
     const plugin = new PluginClass();
 
-    // 7. 调用 onLoad
+    // 7. Call onLoad
     await plugin.onLoad(context);
 
-    // 8. 注册
+    // 8. Register
     this.plugins.set(manifest.name, {
       manifest,
       instance: plugin,
@@ -312,13 +312,13 @@ class PluginLoader {
     const loaded = this.plugins.get(name);
     if (!loaded) return;
 
-    // 调用 onUnload
+    // Call onUnload
     await loaded.instance.onUnload?.();
 
-    // 清理注册的内容
+    // Cleanup registered content
     loaded.context.cleanup();
 
-    // 从注册表移除
+    // Remove from registry
     this.registry.unregister(name);
 
     this.plugins.delete(name);
@@ -332,19 +332,19 @@ class PluginLoader {
 
 ---
 
-## 插件沙箱
+## Plugin Sandbox
 
-### 安全限制
+### Security Restrictions
 
-| 限制项 | 说明 |
-|--------|------|
-| 文件系统 | 只能访问插件目录和用户授权的目录 |
-| 网络 | 只能访问白名单域名 |
-| 系统 API | 禁止访问敏感系统 API |
-| 内存 | 限制内存使用 |
-| CPU | 限制执行时间 |
+| Restriction | Description |
+|-------------|-------------|
+| Filesystem | Can only access plugin directory and user-authorized directories |
+| Network | Can only access whitelisted domains |
+| System API | Prohibited from accessing sensitive system APIs |
+| Memory | Memory usage limited |
+| CPU | Execution time limited |
 
-### 实现方式
+### Implementation
 
 ```typescript
 // plugins/sandbox.ts
@@ -353,22 +353,22 @@ class PluginSandbox {
 
   constructor(manifest: PluginManifest) {
     this.vm = new VM({
-      timeout: 30000, // 30 秒超时
+      timeout: 30000, // 30 second timeout
       sandbox: this.createSandbox(manifest),
     });
   }
 
   private createSandbox(manifest: PluginManifest) {
     const sandbox: Record<string, unknown> = {
-      // 基础 API
+      // Basic APIs
       console: this.createSafeConsole(),
       setTimeout: this.createSafeTimeout(),
       setInterval: this.createSafeInterval(),
 
-      // 受限的 fetch
+      // Restricted fetch
       fetch: this.createSafeFetch(manifest.prismax.permissions),
 
-      // 禁止的 API
+      // Prohibited APIs
       process: undefined,
       require: undefined,
       __dirname: undefined,
@@ -384,7 +384,7 @@ class PluginSandbox {
     }
 
     return async (url: string, options?: RequestInit) => {
-      // 检查 URL 白名单
+      // Check URL whitelist
       if (!this.isAllowedUrl(url)) {
         throw new Error(`Network access to ${url} is not allowed`);
       }
@@ -394,7 +394,7 @@ class PluginSandbox {
   }
 
   private isAllowedUrl(url: string): boolean {
-    // 检查 URL 是否在白名单中
+    // Check if URL is in whitelist
     const allowedDomains = [
       'api.openai.com',
       'api.anthropic.com',
@@ -409,7 +409,7 @@ class PluginSandbox {
 
 ---
 
-## 插件注册表
+## Plugin Registry
 
 ```typescript
 // plugins/registry.ts
@@ -418,7 +418,7 @@ class PluginRegistry {
   private modelProviders: Map<string, ModelProviderDefinition> = new Map();
   private uiExtensions: Map<string, UIExtension[]> = new Map();
 
-  // 工具注册
+  // Tool registration
   registerTool(pluginName: string, tool: ToolDefinition): void {
     const key = `${pluginName}:${tool.name}`;
     this.tools.set(key, tool);
@@ -432,7 +432,7 @@ class PluginRegistry {
     return Array.from(this.tools.values());
   }
 
-  // 模型提供商注册
+  // Model provider registration
   registerModelProvider(
     pluginName: string,
     provider: ModelProviderDefinition
@@ -444,7 +444,7 @@ class PluginRegistry {
     return this.modelProviders.get(id);
   }
 
-  // UI 扩展注册
+  // UI extension registration
   registerUIExtension(pluginName: string, extension: UIExtension): void {
     const extensions = this.uiExtensions.get(extension.slot) || [];
     extensions.push(extension);
@@ -460,12 +460,12 @@ class PluginRegistry {
 
 ---
 
-## 内置插件
+## Built-in Plugins
 
-### Web 搜索插件
+### Web Search Plugin
 
 ```typescript
-// 提供 web_search 工具
+// Provides web_search tool
 {
   name: 'web_search',
   description: 'Search the web for current information',
@@ -476,10 +476,10 @@ class PluginRegistry {
 }
 ```
 
-### URL 抓取插件
+### URL Fetch Plugin
 
 ```typescript
-// 提供 url_fetch 工具
+// Provides url_fetch tool
 {
   name: 'url_fetch',
   description: 'Fetch and parse content from a URL',
@@ -489,10 +489,10 @@ class PluginRegistry {
 }
 ```
 
-### 代码执行插件
+### Code Interpreter Plugin
 
 ```typescript
-// 提供 code_interpreter 工具
+// Provides code_interpreter tool
 {
   name: 'code_interpreter',
   description: 'Execute Python code in a sandboxed environment',
@@ -504,62 +504,62 @@ class PluginRegistry {
 
 ---
 
-## 插件开发指南
+## Plugin Development Guide
 
-### 创建插件项目
+### Create Plugin Project
 
 ```bash
-# 使用脚手架创建
+# Use scaffolding to create
 npx create-prismax-plugin my-plugin
 
-# 项目结构
+# Project structure
 my-plugin/
 ├── src/
-│   ├── index.ts        # 插件入口
-│   └── SettingsPage.tsx # 设置页面（可选）
-├── manifest.json       # 插件清单
+│   ├── index.ts        # Plugin entry
+│   └── SettingsPage.tsx # Settings page (optional)
+├── manifest.json       # Plugin manifest
 ├── package.json
 └── tsconfig.json
 ```
 
-### 开发调试
+### Development & Debugging
 
 ```bash
-# 启动开发模式
+# Start development mode
 pnpm dev
 
-# 在 PrismaX 中加载开发插件
-# 设置 -> 插件 -> 加载本地插件 -> 选择插件目录
+# Load development plugin in PrismaX
+# Settings -> Plugins -> Load Local Plugin -> Select plugin directory
 ```
 
-### 发布插件
+### Publish Plugin
 
 ```bash
-# 构建
+# Build
 pnpm build
 
-# 打包
+# Package
 pnpm pack
 
-# 发布到插件市场（未来功能）
+# Publish to plugin marketplace (future feature)
 pnpm publish
 ```
 
 ---
 
-## 插件市场（规划中）
+## Plugin Marketplace (Planned)
 
-### 功能
+### Features
 
-- 浏览和搜索插件
-- 一键安装/卸载
-- 自动更新
-- 评分和评论
-- 开发者认证
+- Browse and search plugins
+- One-click install/uninstall
+- Auto updates
+- Ratings and reviews
+- Developer verification
 
-### 安全审核
+### Security Review
 
-- 代码审查
-- 权限审核
-- 恶意行为检测
-- 签名验证
+- Code review
+- Permission audit
+- Malicious behavior detection
+- Signature verification

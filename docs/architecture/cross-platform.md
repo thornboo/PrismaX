@@ -1,46 +1,46 @@
-# 跨平台适配设计
+# Cross-Platform Adaptation Design
 
-> 本文档描述 PrismaX 的 Web/Desktop 跨平台适配架构
-
----
-
-## 概述
-
-PrismaX 采用 **Web 优先** 策略：
-1. v0.1.0 先实现 Web 版，验证核心架构
-2. v0.2.0 Desktop 版复用 Web 渲染层，套 Electron 壳
-
-为实现代码最大化复用，需要在关键模块设计抽象层。
+> This document describes the PrismaX Web/Desktop cross-platform adaptation architecture
 
 ---
 
-## 架构策略
+## Overview
 
-### Desktop 复用 Web 渲染层
+PrismaX adopts a **Web-first** strategy:
+1. v0.1.0 implements Web version first to validate core architecture
+2. v0.2.0 Desktop version reuses Web rendering layer, wrapped in Electron shell
+
+To maximize code reuse, abstraction layers need to be designed for key modules.
+
+---
+
+## Architecture Strategy
+
+### Desktop Reuses Web Rendering Layer
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    apps/desktop (Electron)                  │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │                    主进程 (Main)                       │  │
-│  │  - 窗口管理                                            │  │
-│  │  - IPC 处理                                            │  │
-│  │  - 系统集成（托盘、快捷键、自动更新）                    │  │
-│  │  - 本地能力（文件系统、Keychain、SQLite）               │  │
+│  │                    Main Process                        │  │
+│  │  - Window management                                   │  │
+│  │  - IPC handling                                        │  │
+│  │  - System integration (tray, shortcuts, auto-update)   │  │
+│  │  - Local capabilities (filesystem, Keychain, SQLite)   │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                            │ IPC                            │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │                   渲染进程 (Renderer)                   │  │
+│  │                   Renderer Process                     │  │
 │  │  ┌─────────────────────────────────────────────────┐  │  │
 │  │  │              apps/web (Next.js)                 │  │  │
-│  │  │  - 开发时：加载 http://localhost:3000           │  │  │
-│  │  │  - 生产时：加载构建产物                          │  │  │
+│  │  │  - Dev: load http://localhost:3000              │  │  │
+│  │  │  - Prod: load build artifacts                   │  │  │
 │  │  └─────────────────────────────────────────────────┘  │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 平台检测
+### Platform Detection
 
 ```typescript
 // packages/shared/src/platform.ts
@@ -64,31 +64,31 @@ export function isWeb(): boolean {
 
 ---
 
-## 数据层抽象
+## Data Layer Abstraction
 
-### 数据库适配器接口
+### Database Adapter Interface
 
 ```typescript
 // packages/database/src/adapter.ts
 export interface DatabaseAdapter {
-  // 会话
+  // Conversations
   conversations: ConversationRepository;
-  // 消息
+  // Messages
   messages: MessageRepository;
-  // 设置
+  // Settings
   settings: SettingsRepository;
-  // API 密钥
+  // API Keys
   apiKeys: APIKeyRepository;
-  // 知识库（后期）
+  // Knowledge bases (later)
   knowledgeBases?: KnowledgeBaseRepository;
 
-  // 生命周期
+  // Lifecycle
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   migrate(): Promise<void>;
 }
 
-// 仓库接口示例
+// Repository interface example
 export interface ConversationRepository {
   findAll(userId?: string): Promise<Conversation[]>;
   findById(id: string): Promise<Conversation | null>;
@@ -106,7 +106,7 @@ export interface MessageRepository {
 }
 ```
 
-### PostgreSQL 适配器（Web）
+### PostgreSQL Adapter (Web)
 
 ```typescript
 // packages/database/src/adapters/postgres.ts
@@ -169,7 +169,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     },
   };
 
-  // ... 其他仓库实现
+  // ... other repository implementations
 
   async connect() {
     await this.pool.connect();
@@ -180,12 +180,12 @@ export class PostgresAdapter implements DatabaseAdapter {
   }
 
   async migrate() {
-    // 使用 drizzle-kit 迁移
+    // Use drizzle-kit migration
   }
 }
 ```
 
-### SQLite 适配器（Desktop）
+### SQLite Adapter (Desktop)
 
 ```typescript
 // packages/database/src/adapters/sqlite.ts
@@ -232,11 +232,11 @@ export class SQLiteAdapter implements DatabaseAdapter {
       return this.conversations.findById(id);
     },
 
-    // ... 其他方法
+    // ... other methods
   };
 
   async connect() {
-    // SQLite 无需显式连接
+    // SQLite doesn't need explicit connection
   }
 
   async disconnect() {
@@ -244,12 +244,12 @@ export class SQLiteAdapter implements DatabaseAdapter {
   }
 
   async migrate() {
-    // 使用 drizzle-kit 迁移
+    // Use drizzle-kit migration
   }
 }
 ```
 
-### 适配器工厂
+### Adapter Factory
 
 ```typescript
 // packages/database/src/index.ts
@@ -282,9 +282,9 @@ export { DatabaseAdapter } from './adapter';
 
 ---
 
-## API Key 存储抽象
+## API Key Storage Abstraction
 
-### KeyStore 接口
+### KeyStore Interface
 
 ```typescript
 // packages/core/src/security/key-store.ts
@@ -296,7 +296,7 @@ export interface KeyStore {
 }
 ```
 
-### 数据库 KeyStore（Web）
+### Database KeyStore (Web)
 
 ```typescript
 // packages/core/src/security/database-key-store.ts
@@ -336,17 +336,17 @@ export class DatabaseKeyStore implements KeyStore {
 }
 ```
 
-### Keychain KeyStore（Desktop）
+### Keychain KeyStore (Desktop)
 
 ```typescript
 // packages/core/src/security/keychain-store.ts
-// 此实现在 Electron 主进程中运行，通过 IPC 暴露给渲染进程
+// This implementation runs in Electron main process, exposed to renderer via IPC
 
 export class KeychainStore implements KeyStore {
   private serviceName = 'PrismaX';
 
   async get(provider: string): Promise<string | null> {
-    // 通过 IPC 调用主进程
+    // Call main process via IPC
     return window.electronAPI.keychain.get(provider);
   }
 
@@ -363,7 +363,7 @@ export class KeychainStore implements KeyStore {
   }
 }
 
-// Electron 主进程实现
+// Electron main process implementation
 // apps/desktop/electron/ipc/keychain.ts
 import keytar from 'keytar';
 
@@ -389,7 +389,7 @@ export const keychainHandlers = {
 };
 ```
 
-### KeyStore 工厂
+### KeyStore Factory
 
 ```typescript
 // packages/core/src/security/index.ts
@@ -416,11 +416,11 @@ export async function getKeyStore(): Promise<KeyStore> {
 
 ---
 
-## Ollama 集成
+## Ollama Integration
 
-### Web 端注意事项
+### Web Considerations
 
-Web 端调用本地 Ollama 需要处理 CORS：
+Web calling local Ollama needs CORS handling:
 
 ```typescript
 // packages/ai-sdk/src/providers/ollama/index.ts
@@ -430,13 +430,13 @@ export class OllamaProvider implements AIProvider {
 
   constructor(config: OllamaConfig) {
     this.baseUrl = config.baseUrl || 'http://localhost:11434';
-    // Web 端需要通过服务端代理
+    // Web needs server-side proxy
     this.useProxy = getPlatform() === 'web';
   }
 
   async chat(messages: Message[], options?: ChatOptions): Promise<ChatResponse> {
     const url = this.useProxy
-      ? '/api/ollama/chat'  // 服务端代理
+      ? '/api/ollama/chat'  // Server-side proxy
       : `${this.baseUrl}/api/chat`;
 
     const response = await fetch(url, {
@@ -467,7 +467,7 @@ export class OllamaProvider implements AIProvider {
       }),
     });
 
-    // 解析流式响应
+    // Parse streaming response
     const reader = response.body?.getReader();
     if (!reader) throw new Error('No response body');
 
@@ -491,7 +491,7 @@ export class OllamaProvider implements AIProvider {
 }
 ```
 
-### Web 端代理路由
+### Web Proxy Route
 
 ```typescript
 // apps/web/src/app/api/ollama/chat/route.ts
@@ -508,7 +508,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (body.stream) {
-    // 转发流式响应
+    // Forward streaming response
     return new NextResponse(response.body, {
       headers: { 'Content-Type': 'application/x-ndjson' },
     });
@@ -519,33 +519,33 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-### Desktop 端直连
+### Desktop Direct Connection
 
-Desktop 端可以直接调用本地 Ollama，无需代理：
+Desktop can directly call local Ollama without proxy:
 
 ```typescript
-// 在 Desktop 环境下，OllamaProvider 的 useProxy 为 false
-// 直接请求 http://localhost:11434
+// In Desktop environment, OllamaProvider's useProxy is false
+// Directly requests http://localhost:11434
 ```
 
 ---
 
-## IPC 通信设计
+## IPC Communication Design
 
-### Preload 脚本
+### Preload Script
 
 ```typescript
 // apps/desktop/electron/preload.ts
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 平台标识
+  // Platform identifier
   platform: 'desktop',
 
-  // 数据库路径
+  // Database path
   getDbPath: () => ipcRenderer.invoke('db:getPath'),
 
-  // Keychain 操作
+  // Keychain operations
   keychain: {
     get: (provider: string) => ipcRenderer.invoke('keychain:get', provider),
     set: (provider: string, key: string) =>
@@ -554,7 +554,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     list: () => ipcRenderer.invoke('keychain:list'),
   },
 
-  // 文件系统（后期知识库用）
+  // Filesystem (for knowledge base later)
   fs: {
     readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
     writeFile: (path: string, data: string) =>
@@ -563,7 +563,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('fs:selectFile', options),
   },
 
-  // 窗口控制
+  // Window control
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),
     maximize: () => ipcRenderer.send('window:maximize'),
@@ -572,7 +572,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 });
 ```
 
-### 类型声明
+### Type Declarations
 
 ```typescript
 // packages/shared/src/types/electron.d.ts
@@ -606,9 +606,9 @@ declare global {
 
 ---
 
-## 环境变量
+## Environment Variables
 
-### Web 端
+### Web
 
 ```bash
 # .env.local (Web)
@@ -617,21 +617,21 @@ ENCRYPTION_KEY=your-32-byte-hex-key
 OLLAMA_URL=http://localhost:11434
 ```
 
-### Desktop 端
+### Desktop
 
 ```bash
-# Desktop 端大部分配置通过 electron-store 管理
-# 敏感信息通过系统 Keychain 存储
+# Desktop configuration mostly managed via electron-store
+# Sensitive info stored via system Keychain
 ```
 
 ---
 
-## 总结
+## Summary
 
-| 模块 | Web | Desktop |
-|------|-----|---------|
-| 数据库 | PostgreSQL | SQLite |
-| API Key 存储 | 加密存数据库 | 系统 Keychain |
-| Ollama | 服务端代理 | 直连 |
-| 文件系统 | 服务端处理 | IPC 调用主进程 |
-| 渲染层 | Next.js | 复用 Web |
+| Module | Web | Desktop |
+|--------|-----|---------|
+| Database | PostgreSQL | SQLite |
+| API Key Storage | Encrypted in database | System Keychain |
+| Ollama | Server-side proxy | Direct connection |
+| Filesystem | Server-side handling | IPC to main process |
+| Rendering Layer | Next.js | Reuse Web |

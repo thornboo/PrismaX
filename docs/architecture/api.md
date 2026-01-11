@@ -1,60 +1,60 @@
-# API 设计
+# API Design
 
-> 本文档描述 PrismaX 的 API 接口设计
-
----
-
-## API 架构
-
-PrismaX 使用 tRPC 实现端到端类型安全的 API：
-
-```
-+-------------------+     +-------------------+     +-------------------+
-|    客户端          |     |    tRPC Router    |     |    数据库          |
-|  (React Query)    | --> |   (Next.js API)   | --> |  (PostgreSQL)     |
-+-------------------+     +-------------------+     +-------------------+
-```
+> This document describes the PrismaX API interface design
 
 ---
 
-## Router 结构
+## API Architecture
+
+PrismaX uses tRPC for end-to-end type-safe APIs:
+
+```
++-------------------+     +-------------------+     +-------------------+
+|      Client       |     |    tRPC Router    |     |     Database      |
+|  (React Query)    | --> |   (Next.js API)   | --> |   (PostgreSQL)    |
++-------------------+     +-------------------+     +-------------------+
+```
+
+---
+
+## Router Structure
 
 ```typescript
 // server/routers/index.ts
 export const appRouter = router({
-  // 会话相关
+  // Conversation related
   conversation: conversationRouter,
 
-  // 消息相关
+  // Message related
   message: messageRouter,
 
-  // 知识库相关
+  // Knowledge base related
   knowledge: knowledgeRouter,
 
-  // 助手相关
+  // Assistant related
   assistant: assistantRouter,
 
-  // 模型配置相关
+  // Model configuration related
   model: modelRouter,
 
-  // 用户相关
+  // User related
   user: userRouter,
 
-  // 设置相关
+  // Settings related
   settings: settingsRouter,
 });
 ```
 
 ---
 
-## 会话 API
+## Conversation API
 
 ### conversation.list
 
-获取会话列表
+Get conversation list
 
 ```typescript
-// 输入
+// Input
 input: {
   folderId?: string;
   search?: string;
@@ -62,7 +62,7 @@ input: {
   cursor?: string;
 }
 
-// 输出
+// Output
 output: {
   items: Conversation[];
   nextCursor?: string;
@@ -71,10 +71,10 @@ output: {
 
 ### conversation.create
 
-创建新会话
+Create new conversation
 
 ```typescript
-// 输入
+// Input
 input: {
   title?: string;
   model?: string;
@@ -82,16 +82,16 @@ input: {
   folderId?: string;
 }
 
-// 输出
+// Output
 output: Conversation
 ```
 
 ### conversation.update
 
-更新会话
+Update conversation
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
   title?: string;
@@ -102,41 +102,41 @@ input: {
   isArchived?: boolean;
 }
 
-// 输出
+// Output
 output: Conversation
 ```
 
 ### conversation.delete
 
-删除会话
+Delete conversation
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
 }
 
-// 输出
+// Output
 output: { success: boolean }
 ```
 
 ---
 
-## 消息 API
+## Message API
 
 ### message.list
 
-获取消息列表
+Get message list
 
 ```typescript
-// 输入
+// Input
 input: {
   conversationId: string;
   limit?: number;
   cursor?: string;
 }
 
-// 输出
+// Output
 output: {
   items: Message[];
   nextCursor?: string;
@@ -145,10 +145,10 @@ output: {
 
 ### message.send
 
-发送消息（流式响应）
+Send message (streaming response)
 
 ```typescript
-// 输入
+// Input
 input: {
   conversationId: string;
   content: string;
@@ -156,7 +156,7 @@ input: {
   knowledgeBaseIds?: string[];
 }
 
-// 输出（流式）
+// Output (streaming)
 output: AsyncIterable<{
   type: 'text' | 'done' | 'error';
   content?: string;
@@ -167,15 +167,15 @@ output: AsyncIterable<{
 
 ### message.regenerate
 
-重新生成消息
+Regenerate message
 
 ```typescript
-// 输入
+// Input
 input: {
   messageId: string;
 }
 
-// 输出（流式）
+// Output (streaming)
 output: AsyncIterable<{
   type: 'text' | 'done' | 'error';
   content?: string;
@@ -185,55 +185,55 @@ output: AsyncIterable<{
 
 ### message.update
 
-更新消息
+Update message
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
   content: string;
 }
 
-// 输出
+// Output
 output: Message
 ```
 
 ### message.delete
 
-删除消息
+Delete message
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
 }
 
-// 输出
+// Output
 output: { success: boolean }
 ```
 
 ---
 
-## 知识库 API
+## Knowledge Base API
 
 ### knowledge.listBases
 
-获取知识库列表
+Get knowledge base list
 
 ```typescript
-// 输入
+// Input
 input: {}
 
-// 输出
+// Output
 output: KnowledgeBase[]
 ```
 
 ### knowledge.createBase
 
-创建知识库
+Create knowledge base
 
 ```typescript
-// 输入
+// Input
 input: {
   name: string;
   description?: string;
@@ -242,80 +242,80 @@ input: {
   chunkOverlap?: number;
 }
 
-// 输出
+// Output
 output: KnowledgeBase
 ```
 
 ### knowledge.deleteBase
 
-删除知识库
+Delete knowledge base
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
 }
 
-// 输出
+// Output
 output: { success: boolean }
 ```
 
 ### knowledge.listDocuments
 
-获取文档列表
+Get document list
 
 ```typescript
-// 输入
+// Input
 input: {
   knowledgeBaseId: string;
 }
 
-// 输出
+// Output
 output: Document[]
 ```
 
 ### knowledge.uploadDocument
 
-上传文档
+Upload document
 
 ```typescript
-// 输入
+// Input
 input: {
   knowledgeBaseId: string;
   file: File;
 }
 
-// 输出
+// Output
 output: Document
 ```
 
 ### knowledge.deleteDocument
 
-删除文档
+Delete document
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
 }
 
-// 输出
+// Output
 output: { success: boolean }
 ```
 
 ### knowledge.search
 
-搜索知识库
+Search knowledge base
 
 ```typescript
-// 输入
+// Input
 input: {
   knowledgeBaseIds: string[];
   query: string;
   topK?: number;
 }
 
-// 输出
+// Output
 output: {
   results: {
     content: string;
@@ -328,28 +328,28 @@ output: {
 
 ---
 
-## 助手 API
+## Assistant API
 
 ### assistant.list
 
-获取助手列表
+Get assistant list
 
 ```typescript
-// 输入
+// Input
 input: {
   includePublic?: boolean;
 }
 
-// 输出
+// Output
 output: Assistant[]
 ```
 
 ### assistant.create
 
-创建助手
+Create assistant
 
 ```typescript
-// 输入
+// Input
 input: {
   name: string;
   description?: string;
@@ -363,61 +363,61 @@ input: {
   isPublic?: boolean;
 }
 
-// 输出
+// Output
 output: Assistant
 ```
 
 ### assistant.update
 
-更新助手
+Update assistant
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
-  // ... 同 create
+  // ... same as create
 }
 
-// 输出
+// Output
 output: Assistant
 ```
 
 ### assistant.delete
 
-删除助手
+Delete assistant
 
 ```typescript
-// 输入
+// Input
 input: {
   id: string;
 }
 
-// 输出
+// Output
 output: { success: boolean }
 ```
 
 ---
 
-## 模型配置 API
+## Model Configuration API
 
 ### model.listProviders
 
-获取模型提供商列表
+Get model provider list
 
 ```typescript
-// 输入
+// Input
 input: {}
 
-// 输出
+// Output
 output: ModelProvider[]
 ```
 
 ### model.updateProvider
 
-更新模型提供商配置
+Update model provider configuration
 
 ```typescript
-// 输入
+// Input
 input: {
   provider: string;
   apiKey?: string;
@@ -426,35 +426,35 @@ input: {
   config?: Record<string, unknown>;
 }
 
-// 输出
+// Output
 output: ModelProvider
 ```
 
 ### model.listModels
 
-获取可用模型列表
+Get available model list
 
 ```typescript
-// 输入
+// Input
 input: {
   provider?: string;
 }
 
-// 输出
+// Output
 output: Model[]
 ```
 
 ### model.testConnection
 
-测试模型连接
+Test model connection
 
 ```typescript
-// 输入
+// Input
 input: {
   provider: string;
 }
 
-// 输出
+// Output
 output: {
   success: boolean;
   error?: string;
@@ -464,72 +464,72 @@ output: {
 
 ---
 
-## 用户 API
+## User API
 
 ### user.me
 
-获取当前用户信息
+Get current user info
 
 ```typescript
-// 输入
+// Input
 input: {}
 
-// 输出
+// Output
 output: User
 ```
 
 ### user.updateProfile
 
-更新用户资料
+Update user profile
 
 ```typescript
-// 输入
+// Input
 input: {
   name?: string;
   avatar?: string;
 }
 
-// 输出
+// Output
 output: User
 ```
 
 ### user.updatePassword
 
-更新密码
+Update password
 
 ```typescript
-// 输入
+// Input
 input: {
   currentPassword: string;
   newPassword: string;
 }
 
-// 输出
+// Output
 output: { success: boolean }
 ```
 
 ---
 
-## 设置 API
+## Settings API
 
 ### settings.get
 
-获取用户设置
+Get user settings
 
 ```typescript
-// 输入
+// Input
 input: {}
 
-// 输出
+// Output
 output: UserSettings
 ```
 
 ### settings.update
 
-更新用户设置
+Update user settings
 
 ```typescript
-// 输入
+// Input
 input: {
   theme?: 'light' | 'dark' | 'system';
   language?: string;
@@ -538,26 +538,26 @@ input: {
   // ...
 }
 
-// 输出
+// Output
 output: UserSettings
 ```
 
 ---
 
-## 错误处理
+## Error Handling
 
-### 错误码
+### Error Codes
 
-| 错误码 | 说明 |
-|--------|------|
-| `UNAUTHORIZED` | 未授权 |
-| `FORBIDDEN` | 禁止访问 |
-| `NOT_FOUND` | 资源不存在 |
-| `BAD_REQUEST` | 请求参数错误 |
-| `INTERNAL_ERROR` | 服务器内部错误 |
-| `RATE_LIMITED` | 请求频率限制 |
+| Error Code | Description |
+|------------|-------------|
+| `UNAUTHORIZED` | Unauthorized |
+| `FORBIDDEN` | Access forbidden |
+| `NOT_FOUND` | Resource not found |
+| `BAD_REQUEST` | Invalid request parameters |
+| `INTERNAL_ERROR` | Internal server error |
+| `RATE_LIMITED` | Rate limit exceeded |
 
-### 错误响应格式
+### Error Response Format
 
 ```typescript
 {
@@ -569,24 +569,24 @@ output: UserSettings
 
 ---
 
-## 认证
+## Authentication
 
-### 认证方式
+### Authentication Methods
 
-- Web 版：JWT Token（存储在 HttpOnly Cookie）
-- 桌面版：无需认证（单用户）
+- Web Version: JWT Token (stored in HttpOnly Cookie)
+- Desktop Version: No authentication needed (single user)
 
-### 认证流程
+### Authentication Flow
 
 ```
-1. 用户登录 -> 获取 JWT Token
-2. 请求携带 Token -> 验证身份
-3. Token 过期 -> 自动刷新
+1. User login -> Get JWT Token
+2. Request with Token -> Verify identity
+3. Token expired -> Auto refresh
 ```
 
-### 受保护的路由
+### Protected Routes
 
-所有 API 路由默认需要认证，除了：
+All API routes require authentication by default, except:
 
 - `auth.login`
 - `auth.register`
