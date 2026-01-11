@@ -4,6 +4,30 @@
 
 ---
 
+## Core Architecture Standard (Clean Architecture)
+
+> Based on strict business requirements, we adopt Clean Architecture to ensure absolute decoupling of core logic from the infrastructure (Next.js/Electron/DB).
+
+### 1. Architecture Principles
+
+1.  **Framework Agnostic**: Core business logic (Core Layer) must not import any framework-specific APIs (Next.js `req/res`, Electron `ipcMain`).
+2.  **Database Agnostic**: Business logic must not rely on specific databases (Postgres/SQLite) but interact through Repositories.
+3.  **Interface Driven**: All external dependencies (AI, DB, Auth) must be inverted via Interfaces.
+
+### 2. Dependency Rule
+
+```
+UI Layer -> Adapter Layer -> Service Layer (Core) -> Repository Interfaces (Core) <- Infrastructure Layer (DB Impl)
+```
+
+- **UI Layer**: React Components (View)
+- **Adapter Layer**: tRPC Routers (Web) / IPC Handlers (Desktop)
+- **Service Layer**: Pure TS Classes (Business Logic)
+- **Repository Interface**: Data Access Definitions
+- **Infrastructure Layer**: Drizzle(PG) / Better-SQLite3 Impl
+
+---
+
 ## Layered Architecture
 
 ### 1. User Interface Layer (UI Layer)
@@ -118,6 +142,11 @@ packages/core/
 │   ├── conversation.ts    # Conversation management
 │   ├── message.ts         # Message processing
 │   └── streaming.ts       # Streaming response handling
+│
+├── memory/                # Long-term Memory System
+│   ├── provider.ts        # IMemoryProvider Interface
+│   ├── native.ts          # Native Memory Implementation (Core+Archival)
+│   └── letta.ts           # Letta Client Implementation (Proxy)
 │
 ├── knowledge/             # Knowledge base core logic
 │   ├── embedding.ts       # Vectorization processing

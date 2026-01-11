@@ -33,12 +33,15 @@ Features to implement in the second phase:
 |---------|-------------|---------|-----|--------|
 | **Knowledge Base RAG** | Document upload, vector search, Q&A | Yes | Yes | Yes |
 | **File Upload** | Images, PDF, documents | Yes | Yes | Yes |
-| **Cloud Sync** | Cross-device data synchronization | Yes | Yes | Yes |
+| **Cloud Sync** | Cross-device data synchronization (Pro) | Yes | Yes | Yes |
+| **Unlimited Knowledge** | Higher document limit (Pro) | Yes | Yes | Yes |
 | **Assistant Presets** | System prompt templates | Yes | Yes | Yes |
+| **Long-term Memory** | Core Memory + Archival Memory (Native/Letta) | Yes | Yes | Yes |
 | **Keyboard Shortcuts** | Common operation shortcuts | Yes | Yes | - |
 | **Search Function** | Session, message search | Yes | Yes | Yes |
 | **Data Export** | Export conversation records | Yes | Yes | Yes |
 | **Multi-user Management** | User management, permission control | - | Yes | - |
+| **Admin Panel** | User data mgmt, Physical deletion, System config | - | Yes | - |
 
 ### P2 - Enhanced Features
 

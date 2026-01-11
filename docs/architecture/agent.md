@@ -539,6 +539,46 @@ class MCPServer {
 
 ---
 
+## Long-term Memory System (Dual-Engine)
+
+> To support both offline capabilities and advanced memory management, PrismaX adopts a **Dual-Engine Memory Architecture**.
+
+### Architecture Overview
+
+```typescript
+interface IMemoryProvider {
+  // Core Memory (Hot Storage) - Persona & User Context
+  getCoreMemory(): Promise<CoreMemoryBlock[]>;
+  updateCoreMemory(blockLabel: string, value: string): Promise<void>;
+
+  // Archival Memory (Cold Storage) - Past Conversations & Facts
+  searchArchivalMemory(query: string, limit?: number): Promise<MemoryResult[]>;
+  addArchivalMemory(content: string): Promise<void>;
+  
+  // Recall context for current turn
+  retrieveContext(message: Message): Promise<ContextData>;
+}
+```
+
+### 1. Native Memory Engine (Default / Offline)
+
+*   **Target**: Desktop users, Offline mode, Standard Web users.
+*   **Implementation**:
+    *   **Core Memory**: Stored in `assistants` table (extended fields) or dedicated `memories` table. Injected into System Prompt.
+    *   **Archival Memory**: Uses the standard Vector Store (SQLite-VSS / PGVector) to store conversation summaries and extracted facts.
+*   **Mechanism**: A lightweight background process analyzes conversation turns to extract facts and update the Vector Store.
+
+### 2. Letta Remote Engine (Advanced / Plugin)
+
+*   **Target**: Power users, Letta Cloud subscribers, Self-hosted Docker users.
+*   **Implementation**: Acts as a proxy client to a Letta (formerly MemGPT) server.
+*   **Mechanism**:
+    *   Connects via HTTP API.
+    *   Delegates state management to the Letta Server.
+    *   Syncs "Core Memory" blocks to UI for visualization.
+
+---
+
 ## Agent Modes
 
 ### ReAct Mode

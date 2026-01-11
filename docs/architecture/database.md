@@ -8,9 +8,22 @@
 
 | Scenario | Database | Description |
 |----------|----------|-------------|
-| Web Version | PostgreSQL + pgvector | Vector search support |
-| Desktop Version | SQLite | Lightweight local storage |
+| Web Version | PostgreSQL + pgvector | Vector search support (Soft Delete enforced) |
+| Desktop Version | SQLite + sqlite-vss | Lightweight local storage (Hard Delete allowed) |
 | Cache | Redis | Agent state, session cache |
+
+### Data Deletion Strategy (Strict Compliance)
+
+> To meet business requirements, we implement different deletion strategies for Web and Desktop.
+
+- **Web Version (SaaS)**:
+  - **User Action**: "Delete" marks the record as `deleted_at = NOW()`. Data is invisible to user but retained in DB.
+  - **Admin Action**: Only System Administrators can perform physical deletion via Admin Panel.
+  - **Reason**: Data compliance and auditing.
+
+- **Desktop Version (Local)**:
+  - **User Action**: "Delete" performs physical `DELETE FROM table`.
+  - **Reason**: User privacy and disk space management.
 
 ---
 
@@ -43,6 +56,27 @@ CREATE TABLE user_settings (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)
+);
+```
+
+### File Storage (Hybrid Strategy)
+
+> Supports "Cloud Sync" (S3) and "Local Only" modes. Core Logic handles storage abstraction.
+
+```sql
+-- Files table (Universal attachment storage)
+CREATE TABLE files (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  filename VARCHAR(255) NOT NULL,
+  size INTEGER NOT NULL,
+  mime_type VARCHAR(100),
+  storage_type VARCHAR(50) NOT NULL, -- 's3' | 'local'
+  url VARCHAR(500), -- S3 URL or Local Path (encrypted if local)
+  hash VARCHAR(64), -- SHA-256 for deduplication
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_at TIMESTAMP WITH TIME ZONE -- Soft Delete
 );
 ```
 
@@ -93,7 +127,13 @@ CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX idx_messages_created_at ON messages(created_at);
 ```
 
-### Knowledge Base Related
+### Knowledge Base Related (Heavy Usage Optimization)
+
+> Designed for heavy knowledge base usage scenarios (100+ documents per user).
+
+**Optimization Strategy**:
+1. **Vector Separation**: In Core Architecture, define `IVectorStore` interface. Web uses `pgvector`, but ready to switch to Qdrant/Milvus if scaling needed.
+2. **Chunking Strategy**: Adaptive chunking based on content type (Code vs Text).
 
 ```sql
 -- Knowledge bases table
@@ -106,7 +146,8 @@ CREATE TABLE knowledge_bases (
   chunk_size INTEGER DEFAULT 1000,
   chunk_overlap INTEGER DEFAULT 200,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_at TIMESTAMP WITH TIME ZONE -- Soft Delete
 );
 
 -- Documents table
@@ -171,6 +212,16 @@ CREATE TABLE assistants (
 -- Indexes
 CREATE INDEX idx_assistants_user_id ON assistants(user_id);
 CREATE INDEX idx_assistants_is_public ON assistants(is_public);
+
+-- Agent Core Memories (Native Memory Implementation)
+CREATE TABLE agent_memories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  assistant_id UUID REFERENCES assistants(id) ON DELETE CASCADE,
+  label VARCHAR(50) NOT NULL, -- e.g., 'persona', 'human'
+  content TEXT NOT NULL,
+  last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(assistant_id, label)
+);
 ```
 
 ### Model Configuration Related
@@ -182,7 +233,7 @@ CREATE TABLE model_providers (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   provider VARCHAR(50) NOT NULL,  -- 'openai' | 'anthropic' | 'ollama' | ...
   name VARCHAR(100),
-  api_key_encrypted TEXT,  -- Encrypted storage
+  api_key_encrypted TEXT,  -- AES-256-GCM encrypted. Decrypted only in server memory for proxying.
   base_url VARCHAR(500),
   is_enabled BOOLEAN DEFAULT TRUE,
   config JSONB DEFAULT '{}',
@@ -314,6 +365,16 @@ CREATE TABLE assistants (
   tools TEXT DEFAULT '[]',
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Agent Core Memories
+CREATE TABLE agent_memories (
+  id TEXT PRIMARY KEY,
+  assistant_id TEXT REFERENCES assistants(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  content TEXT NOT NULL,
+  last_updated TEXT DEFAULT (datetime('now')),
+  UNIQUE(assistant_id, label)
 );
 
 -- Model providers configuration table

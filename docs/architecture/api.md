@@ -1,593 +1,135 @@
-# API Design
+# Streaming Architecture
 
-> This document describes the PrismaX API interface design
-
----
-
-## API Architecture
-
-PrismaX uses tRPC for end-to-end type-safe APIs:
-
-```
-+-------------------+     +-------------------+     +-------------------+
-|      Client       |     |    tRPC Router    |     |     Database      |
-|  (React Query)    | --> |   (Next.js API)   | --> |   (PostgreSQL)    |
-+-------------------+     +-------------------+     +-------------------+
-```
+> How to implement framework-agnostic AI streaming in Clean Architecture.
 
 ---
 
-## Router Structure
+## 1. The Challenge
+
+Vercel AI SDK and most LLM libraries are tightly coupled with HTTP Responses (Web Streams API). However, in Clean Architecture, **Core Service Layer must not depend on HTTP or View layers**.
+
+We need a unified streaming interface that works for both:
+1.  **Next.js API Routes** (HTTP Response Stream)
+2.  **Electron IPC** (Event-based Communication)
+
+## 2. Core Abstraction: `AsyncGenerator`
+
+We use TypeScript's standard `AsyncGenerator` as the protocol-agnostic stream carrier.
+
+### 2.1 Stream Event Definition
+
+Instead of yielding raw strings, we yield structured events to handle text, tool calls, and errors.
 
 ```typescript
-// server/routers/index.ts
-export const appRouter = router({
-  // Conversation related
-  conversation: conversationRouter,
+// packages/core/src/types/stream.ts
 
-  // Message related
-  message: messageRouter,
+export type StreamEventType = 
+  | 'text-delta'      // Normal text generation
+  | 'tool-call-start' // Agent is calling a tool
+  | 'tool-call-end'   // Tool execution finished
+  | 'error'           // Something went wrong
+  | 'done';           // Generation complete
 
-  // Knowledge base related
-  knowledge: knowledgeRouter,
+export interface StreamEvent {
+  type: StreamEventType;
+  payload: any;
+}
+```
 
-  // Assistant related
-  assistant: assistantRouter,
+### 2.2 Service Layer Implementation
 
-  // Model configuration related
-  model: modelRouter,
+`ChatService` consumes the raw stream from `IAIProvider`, processes business logic (e.g., saving to DB, executing tools), and yields events to the Adapter.
 
-  // User related
-  user: userRouter,
+```typescript
+// packages/core/src/services/ChatService.ts
 
-  // Settings related
-  settings: settingsRouter,
+export class ChatService {
+  async *sendMessage(params: SendMessageParams): AsyncGenerator<StreamEvent> {
+    // 1. Save User Message
+    await this.repo.saveMessage(params.userMessage);
+
+    // 2. Call AI Provider (Abstraction)
+    const rawStream = await this.ai.chatStream(params.messages);
+
+    let fullResponse = '';
+
+    // 3. Process Stream
+    for await (const chunk of rawStream) {
+      fullResponse += chunk;
+      
+      // Pass-through to UI
+      yield { type: 'text-delta', payload: chunk };
+    }
+
+    // 4. Save AI Response (After stream ends)
+    await this.repo.saveMessage({ 
+      role: 'assistant', 
+      content: fullResponse 
+    });
+    
+    yield { type: 'done', payload: null };
+  }
+}
+```
+
+## 3. Adapter Layer Implementation
+
+Adapters convert the generic `AsyncGenerator` into platform-specific formats.
+
+### 3.1 Web Adapter (Next.js / tRPC)
+
+Converts `AsyncGenerator` to `ReadableStream` for HTTP response.
+
+```typescript
+// apps/web/src/app/api/chat/route.ts
+
+export async function POST(req: Request) {
+  const iterator = chatService.sendMessage({ ... });
+  
+  const stream = new ReadableStream({
+    async pull(controller) {
+      const { value, done } = await iterator.next();
+      if (done) {
+        controller.close();
+      } else {
+        // SSE Format
+        controller.enqueue(`data: ${JSON.stringify(value)}
+
+`);
+      }
+    }
+  });
+
+  return new Response(stream);
+}
+```
+
+### 3.2 Desktop Adapter (Electron IPC)
+
+Converts `AsyncGenerator` to IPC events.
+
+```typescript
+// apps/desktop/src/main/ipc/chat.ts
+
+ipcMain.handle('chat:send', async (event, params) => {
+  const iterator = chatService.sendMessage(params);
+  
+  for await (const eventPayload of iterator) {
+    // Send to Renderer via WebContents
+    event.sender.send('chat:stream-chunk', eventPayload);
+  }
 });
 ```
 
----
+## 4. Handling Tool Calls (Agent Mode)
 
-## Conversation API
+When the model decides to call a tool, the `ChatService` intercepts the stream:
 
-### conversation.list
+1.  Model outputs tool call arguments (Stream paused).
+2.  `ChatService` executes the tool (Server-side or via Gateway).
+3.  `ChatService` yields `{ type: 'tool-call-start' }`.
+4.  `ChatService` feeds tool result back to Model.
+5.  Model continues generating text (Stream resumes).
+6.  `ChatService` yields `{ type: 'text-delta' }`.
 
-Get conversation list
-
-```typescript
-// Input
-input: {
-  folderId?: string;
-  search?: string;
-  limit?: number;
-  cursor?: string;
-}
-
-// Output
-output: {
-  items: Conversation[];
-  nextCursor?: string;
-}
-```
-
-### conversation.create
-
-Create new conversation
-
-```typescript
-// Input
-input: {
-  title?: string;
-  model?: string;
-  systemPrompt?: string;
-  folderId?: string;
-}
-
-// Output
-output: Conversation
-```
-
-### conversation.update
-
-Update conversation
-
-```typescript
-// Input
-input: {
-  id: string;
-  title?: string;
-  model?: string;
-  systemPrompt?: string;
-  folderId?: string;
-  isPinned?: boolean;
-  isArchived?: boolean;
-}
-
-// Output
-output: Conversation
-```
-
-### conversation.delete
-
-Delete conversation
-
-```typescript
-// Input
-input: {
-  id: string;
-}
-
-// Output
-output: { success: boolean }
-```
-
----
-
-## Message API
-
-### message.list
-
-Get message list
-
-```typescript
-// Input
-input: {
-  conversationId: string;
-  limit?: number;
-  cursor?: string;
-}
-
-// Output
-output: {
-  items: Message[];
-  nextCursor?: string;
-}
-```
-
-### message.send
-
-Send message (streaming response)
-
-```typescript
-// Input
-input: {
-  conversationId: string;
-  content: string;
-  model?: string;
-  knowledgeBaseIds?: string[];
-}
-
-// Output (streaming)
-output: AsyncIterable<{
-  type: 'text' | 'done' | 'error';
-  content?: string;
-  message?: Message;
-  error?: string;
-}>
-```
-
-### message.regenerate
-
-Regenerate message
-
-```typescript
-// Input
-input: {
-  messageId: string;
-}
-
-// Output (streaming)
-output: AsyncIterable<{
-  type: 'text' | 'done' | 'error';
-  content?: string;
-  message?: Message;
-}>
-```
-
-### message.update
-
-Update message
-
-```typescript
-// Input
-input: {
-  id: string;
-  content: string;
-}
-
-// Output
-output: Message
-```
-
-### message.delete
-
-Delete message
-
-```typescript
-// Input
-input: {
-  id: string;
-}
-
-// Output
-output: { success: boolean }
-```
-
----
-
-## Knowledge Base API
-
-### knowledge.listBases
-
-Get knowledge base list
-
-```typescript
-// Input
-input: {}
-
-// Output
-output: KnowledgeBase[]
-```
-
-### knowledge.createBase
-
-Create knowledge base
-
-```typescript
-// Input
-input: {
-  name: string;
-  description?: string;
-  embeddingModel?: string;
-  chunkSize?: number;
-  chunkOverlap?: number;
-}
-
-// Output
-output: KnowledgeBase
-```
-
-### knowledge.deleteBase
-
-Delete knowledge base
-
-```typescript
-// Input
-input: {
-  id: string;
-}
-
-// Output
-output: { success: boolean }
-```
-
-### knowledge.listDocuments
-
-Get document list
-
-```typescript
-// Input
-input: {
-  knowledgeBaseId: string;
-}
-
-// Output
-output: Document[]
-```
-
-### knowledge.uploadDocument
-
-Upload document
-
-```typescript
-// Input
-input: {
-  knowledgeBaseId: string;
-  file: File;
-}
-
-// Output
-output: Document
-```
-
-### knowledge.deleteDocument
-
-Delete document
-
-```typescript
-// Input
-input: {
-  id: string;
-}
-
-// Output
-output: { success: boolean }
-```
-
-### knowledge.search
-
-Search knowledge base
-
-```typescript
-// Input
-input: {
-  knowledgeBaseIds: string[];
-  query: string;
-  topK?: number;
-}
-
-// Output
-output: {
-  results: {
-    content: string;
-    score: number;
-    documentId: string;
-    documentName: string;
-  }[];
-}
-```
-
----
-
-## Assistant API
-
-### assistant.list
-
-Get assistant list
-
-```typescript
-// Input
-input: {
-  includePublic?: boolean;
-}
-
-// Output
-output: Assistant[]
-```
-
-### assistant.create
-
-Create assistant
-
-```typescript
-// Input
-input: {
-  name: string;
-  description?: string;
-  avatar?: string;
-  model?: string;
-  systemPrompt?: string;
-  temperature?: number;
-  maxTokens?: number;
-  knowledgeBaseIds?: string[];
-  tools?: string[];
-  isPublic?: boolean;
-}
-
-// Output
-output: Assistant
-```
-
-### assistant.update
-
-Update assistant
-
-```typescript
-// Input
-input: {
-  id: string;
-  // ... same as create
-}
-
-// Output
-output: Assistant
-```
-
-### assistant.delete
-
-Delete assistant
-
-```typescript
-// Input
-input: {
-  id: string;
-}
-
-// Output
-output: { success: boolean }
-```
-
----
-
-## Model Configuration API
-
-### model.listProviders
-
-Get model provider list
-
-```typescript
-// Input
-input: {}
-
-// Output
-output: ModelProvider[]
-```
-
-### model.updateProvider
-
-Update model provider configuration
-
-```typescript
-// Input
-input: {
-  provider: string;
-  apiKey?: string;
-  baseUrl?: string;
-  isEnabled?: boolean;
-  config?: Record<string, unknown>;
-}
-
-// Output
-output: ModelProvider
-```
-
-### model.listModels
-
-Get available model list
-
-```typescript
-// Input
-input: {
-  provider?: string;
-}
-
-// Output
-output: Model[]
-```
-
-### model.testConnection
-
-Test model connection
-
-```typescript
-// Input
-input: {
-  provider: string;
-}
-
-// Output
-output: {
-  success: boolean;
-  error?: string;
-  models?: string[];
-}
-```
-
----
-
-## User API
-
-### user.me
-
-Get current user info
-
-```typescript
-// Input
-input: {}
-
-// Output
-output: User
-```
-
-### user.updateProfile
-
-Update user profile
-
-```typescript
-// Input
-input: {
-  name?: string;
-  avatar?: string;
-}
-
-// Output
-output: User
-```
-
-### user.updatePassword
-
-Update password
-
-```typescript
-// Input
-input: {
-  currentPassword: string;
-  newPassword: string;
-}
-
-// Output
-output: { success: boolean }
-```
-
----
-
-## Settings API
-
-### settings.get
-
-Get user settings
-
-```typescript
-// Input
-input: {}
-
-// Output
-output: UserSettings
-```
-
-### settings.update
-
-Update user settings
-
-```typescript
-// Input
-input: {
-  theme?: 'light' | 'dark' | 'system';
-  language?: string;
-  defaultModel?: string;
-  sendOnEnter?: boolean;
-  // ...
-}
-
-// Output
-output: UserSettings
-```
-
----
-
-## Error Handling
-
-### Error Codes
-
-| Error Code | Description |
-|------------|-------------|
-| `UNAUTHORIZED` | Unauthorized |
-| `FORBIDDEN` | Access forbidden |
-| `NOT_FOUND` | Resource not found |
-| `BAD_REQUEST` | Invalid request parameters |
-| `INTERNAL_ERROR` | Internal server error |
-| `RATE_LIMITED` | Rate limit exceeded |
-
-### Error Response Format
-
-```typescript
-{
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-}
-```
-
----
-
-## Authentication
-
-### Authentication Methods
-
-- Web Version: JWT Token (stored in HttpOnly Cookie)
-- Desktop Version: No authentication needed (single user)
-
-### Authentication Flow
-
-```
-1. User login -> Get JWT Token
-2. Request with Token -> Verify identity
-3. Token expired -> Auto refresh
-```
-
-### Protected Routes
-
-All API routes require authentication by default, except:
-
-- `auth.login`
-- `auth.register`
-- `auth.refreshToken`
+**Crucial**: The UI only sees "Status Updates" (Thinking...) and final Text. The complex loop of Tool Execution happens entirely inside `ChatService`, keeping the UI dumb and clean.
