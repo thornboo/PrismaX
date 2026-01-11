@@ -27,10 +27,9 @@ export function SignOutButton() {
           setIsPending(false);
         }
       }}
-      className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-50"
+      className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-zinc-200 hover:bg-white/10 disabled:opacity-50"
     >
       退出登录
     </button>
   );
 }
-
