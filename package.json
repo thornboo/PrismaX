@@ -13,10 +13,33 @@
     "build:web": "turbo build --filter=web",
     "build:desktop": "turbo build --filter=desktop",
     "lint": "turbo lint",
+    "lint:eslint": "pnpm exec eslint .",
+    "lint:eslint:fix": "pnpm exec eslint . --fix",
     "type-check": "turbo type-check",
+    "format": "pnpm exec prettier . --write",
+    "format:check": "pnpm exec prettier . --check",
+    "lint-staged": "lint-staged",
+    "prepare": "husky",
     "test": "turbo test"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "pnpm exec eslint --fix",
+      "pnpm exec prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css,scss,html}": [
+      "pnpm exec prettier --write"
+    ]
+  },
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.0",
+    "eslint-config-prettier": "^10.0.1",
+    "globals": "^15.15.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.23.0",
     "turbo": "^2.7.3"
   }
 }
