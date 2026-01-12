@@ -85,8 +85,7 @@ async function resolveProviderIdForUser(
 export async function importConversationFromJsonText(userId: string, jsonText: string) {
   const raw = JSON.parse(jsonText) as ConversationImportPayload;
 
-  const title =
-    asNonEmptyString(raw.conversation?.title) ?? "导入的会话";
+  const title = asNonEmptyString(raw.conversation?.title) ?? "导入的会话";
 
   const providerId = await resolveProviderIdForUser(userId, raw.provider);
 

@@ -10,26 +10,26 @@
 
 The project adopts an **English-only** strategy to ensure internationalization and code consistency:
 
-| Content | Language Requirement | Example |
-|---------|---------------------|---------|
-| Code comments | English | `// Initialize the chat store` |
-| TODO/FIXME | English | `// TODO: Add pagination support` |
-| Variable/function names | English | `getUserById`, `messageList` |
-| Commit messages | English | `feat(chat): add message editing` |
-| Documentation (docs/) | English | For global developers |
-| README.md | English | Main project documentation |
-| docs/zh/README.md | Chinese | Chinese README |
+| Content                 | Language Requirement | Example                           |
+| ----------------------- | -------------------- | --------------------------------- |
+| Code comments           | English              | `// Initialize the chat store`    |
+| TODO/FIXME              | English              | `// TODO: Add pagination support` |
+| Variable/function names | English              | `getUserById`, `messageList`      |
+| Commit messages         | English              | `feat(chat): add message editing` |
+| Documentation (docs/)   | English              | For global developers             |
+| README.md               | English              | Main project documentation        |
+| docs/zh/README.md       | Chinese              | Chinese README                    |
 
 ### File Naming
 
-| Type | Naming Convention | Example |
-|------|-------------------|---------|
-| React components | PascalCase | `ChatMessage.tsx` |
-| Utility functions | camelCase | `formatDate.ts` |
-| Constants file | camelCase | `constants.ts` |
-| Type definitions | camelCase | `types.ts` |
-| Style files | Same as component | `ChatMessage.module.css` |
-| Test files | Same as source + .test | `formatDate.test.ts` |
+| Type              | Naming Convention      | Example                  |
+| ----------------- | ---------------------- | ------------------------ |
+| React components  | PascalCase             | `ChatMessage.tsx`        |
+| Utility functions | camelCase              | `formatDate.ts`          |
+| Constants file    | camelCase              | `constants.ts`           |
+| Type definitions  | camelCase              | `types.ts`               |
+| Style files       | Same as component      | `ChatMessage.module.css` |
+| Test files        | Same as source + .test | `formatDate.test.ts`     |
 
 ### Directory Structure
 
@@ -64,7 +64,7 @@ interface User {
 }
 
 // Use type for union types, intersection types
-type Status = 'pending' | 'success' | 'error';
+type Status = "pending" | "success" | "error";
 type UserWithRole = User & { role: string };
 
 // Avoid using any, use unknown instead
@@ -125,16 +125,14 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
 }
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, ...props }, ref) => {
-    return (
-      <div>
-        {label && <label>{label}</label>}
-        <input ref={ref} {...props} />
-      </div>
-    );
-  }
-);
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ label, ...props }, ref) => {
+  return (
+    <div>
+      {label && <label>{label}</label>}
+      <input ref={ref} {...props} />
+    </div>
+  );
+});
 ```
 
 ### Hooks Usage
@@ -176,7 +174,7 @@ function ChatInput() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       handleSubmit(e);
     }
   };
@@ -199,21 +197,21 @@ function ChatInput() {
 // Use Tailwind class names
 <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow">
   <span className="text-sm text-gray-500">Hello</span>
-</div>
+</div>;
 
 // Use cn utility function to merge class names
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 <button
   className={cn(
-    'px-4 py-2 rounded-md',
-    variant === 'primary' && 'bg-blue-500 text-white',
-    variant === 'secondary' && 'bg-gray-100 text-gray-900',
-    disabled && 'opacity-50 cursor-not-allowed'
+    "px-4 py-2 rounded-md",
+    variant === "primary" && "bg-blue-500 text-white",
+    variant === "secondary" && "bg-gray-100 text-gray-900",
+    disabled && "opacity-50 cursor-not-allowed",
   )}
 >
   Click me
-</button>
+</button>;
 ```
 
 ### CSS Variables
@@ -242,8 +240,8 @@ import { cn } from '@/lib/utils';
 ### Zustand Store
 
 ```typescript
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface ChatStore {
   // State
@@ -275,9 +273,9 @@ export const useChatStore = create<ChatStore>()(
         })),
     }),
     {
-      name: 'chat-store',
-    }
-  )
+      name: "chat-store",
+    },
+  ),
 );
 ```
 
@@ -311,7 +309,7 @@ export const useChatStore = create<ChatStore>()(
  * formatRelativeTime(new Date()) // 'just now'
  * formatRelativeTime(new Date(Date.now() - 60000)) // '1 minute ago'
  */
-function formatRelativeTime(date: Date, locale = 'en-US'): string {
+function formatRelativeTime(date: Date, locale = "en-US"): string {
   // Implementation
 }
 ```
@@ -332,19 +330,19 @@ function formatRelativeTime(date: Date, locale = 'en-US'): string {
 ### Unit Tests
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { formatRelativeTime } from './formatRelativeTime';
+import { describe, it, expect } from "vitest";
+import { formatRelativeTime } from "./formatRelativeTime";
 
-describe('formatRelativeTime', () => {
+describe("formatRelativeTime", () => {
   it('should return "just now" for current time', () => {
     const result = formatRelativeTime(new Date());
-    expect(result).toBe('just now');
+    expect(result).toBe("just now");
   });
 
   it('should return "1 minute ago" for 1 minute ago', () => {
     const date = new Date(Date.now() - 60000);
     const result = formatRelativeTime(date);
-    expect(result).toBe('1 minute ago');
+    expect(result).toBe("1 minute ago");
   });
 });
 ```
@@ -381,21 +379,21 @@ export default [
   {
     rules: {
       // TypeScript
-      '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-explicit-any": "warn",
 
       // React
-      'react/prop-types': 'off',
-      'react/react-in-jsx-scope': 'off',
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      "react/prop-types": "off",
+      "react/react-in-jsx-scope": "off",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
 
       // Import
-      'import/order': [
-        'error',
+      "import/order": [
+        "error",
         {
-          groups: ['builtin', 'external', 'internal', 'parent', 'sibling'],
-          'newlines-between': 'always',
+          groups: ["builtin", "external", "internal", "parent", "sibling"],
+          "newlines-between": "always",
         },
       ],
     },

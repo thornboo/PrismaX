@@ -62,10 +62,10 @@ The Gateway is responsible for proxying requests to external APIs, hiding user I
 
 ## 4. Built-in vs External Plugins
 
-| Type | Description | Execution Environment | Permissions |
-|------|-------------|-----------------------|-------------|
-| **Built-in** | Native features (File I/O, System) | Core / Main Process | High (Native) |
-| **External** | Third-party APIs (Search, Weather) | Gateway Proxy | Low (HTTP only) |
+| Type         | Description                        | Execution Environment | Permissions     |
+| ------------ | ---------------------------------- | --------------------- | --------------- |
+| **Built-in** | Native features (File I/O, System) | Core / Main Process   | High (Native)   |
+| **External** | Third-party APIs (Search, Weather) | Gateway Proxy         | Low (HTTP only) |
 
 ## 5. Plugin Marketplace
 

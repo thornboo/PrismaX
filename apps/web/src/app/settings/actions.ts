@@ -47,8 +47,7 @@ export async function createProviderAction(formData: FormData) {
   const openaiApiKeyEnc = openaiApiKey.length > 0 ? encryptSecret(openaiApiKey) : null;
 
   const existingDefault = await db.query.aiProviders.findFirst({
-    where: (table) =>
-      and(eq(table.userId, session.user.id), eq(table.isDefault, true)),
+    where: (table) => and(eq(table.userId, session.user.id), eq(table.isDefault, true)),
   });
 
   await db.insert(aiProviders).values({
@@ -82,8 +81,7 @@ export async function updateProviderAction(formData: FormData) {
   const openaiBaseUrl = openaiBaseUrlRaw ? normalizeUrl(openaiBaseUrlRaw) : "";
 
   const existing = await db.query.aiProviders.findFirst({
-    where: (table) =>
-      and(eq(table.id, providerId), eq(table.userId, session.user.id)),
+    where: (table) => and(eq(table.id, providerId), eq(table.userId, session.user.id)),
   });
 
   if (!existing) {
@@ -150,8 +148,7 @@ export async function deleteProviderAction(formData: FormData) {
 
   await db.transaction(async (tx) => {
     const provider = await tx.query.aiProviders.findFirst({
-      where: (table) =>
-        and(eq(table.id, providerId), eq(table.userId, session.user.id)),
+      where: (table) => and(eq(table.id, providerId), eq(table.userId, session.user.id)),
     });
 
     if (!provider) return;

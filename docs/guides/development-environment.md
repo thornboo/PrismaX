@@ -8,20 +8,20 @@
 
 ### Required Software
 
-| Software | Version | Description |
-|----------|---------|-------------|
-| Node.js | 20+ | JavaScript runtime |
-| pnpm | 8+ | Package manager |
-| Git | 2.x | Version control |
+| Software | Version | Description        |
+| -------- | ------- | ------------------ |
+| Node.js  | 20+     | JavaScript runtime |
+| pnpm     | 8+      | Package manager    |
+| Git      | 2.x     | Version control    |
 
 ### Optional Software
 
-| Software | Version | Description |
-|----------|---------|-------------|
-| Docker | 24+ | Containerized deployment |
-| PostgreSQL | 16+ | Database (Web development) |
-| Redis | 7+ | Cache (Web development) |
-| Ollama | latest | Local model testing |
+| Software   | Version | Description                |
+| ---------- | ------- | -------------------------- |
+| Docker     | 24+     | Containerized deployment   |
+| PostgreSQL | 16+     | Database (Web development) |
+| Redis      | 7+      | Cache (Web development)    |
+| Ollama     | latest  | Local model testing        |
 
 ---
 
@@ -171,9 +171,7 @@ Recommended `.vscode/settings.json`:
     "source.fixAll.eslint": "explicit"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
-  "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
-  ]
+  "tailwindCSS.experimental.classRegex": [["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]]
 }
 ```
 

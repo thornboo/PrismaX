@@ -117,8 +117,7 @@ export async function sendMessageAction(formData: FormData) {
   const conversationIdRaw = formData.get("conversationId");
   const contentRaw = formData.get("content");
 
-  const conversationId =
-    typeof conversationIdRaw === "string" ? conversationIdRaw.trim() : "";
+  const conversationId = typeof conversationIdRaw === "string" ? conversationIdRaw.trim() : "";
   const content = typeof contentRaw === "string" ? contentRaw.trim() : "";
 
   if (!conversationId || !content) {
@@ -126,8 +125,7 @@ export async function sendMessageAction(formData: FormData) {
   }
 
   const canWrite = await db.query.conversations.findFirst({
-    where: (table) =>
-      and(eq(table.id, conversationId), eq(table.userId, session.user.id)),
+    where: (table) => and(eq(table.id, conversationId), eq(table.userId, session.user.id)),
   });
 
   if (!canWrite) {

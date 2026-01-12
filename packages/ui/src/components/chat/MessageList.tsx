@@ -33,23 +33,17 @@ export function MessageList({ messages }: MessageListProps) {
       behavior: reduceMotion ? "auto" : "smooth",
       block: "end",
     });
-  }, [messages.length, messages.length > 0 ? messages[messages.length - 1]?.content : "", reduceMotion]);
+  }, [
+    messages.length,
+    messages.length > 0 ? messages[messages.length - 1]?.content : "",
+    reduceMotion,
+  ]);
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="space-y-4"
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4">
       <AnimatePresence initial={false}>
         {messages.map((message) => (
-          <motion.div
-            key={message.id}
-            variants={itemVariants}
-            exit="exit"
-            layout
-          >
+          <motion.div key={message.id} variants={itemVariants} exit="exit" layout>
             <MessageBubble message={message} />
           </motion.div>
         ))}
@@ -58,4 +52,3 @@ export function MessageList({ messages }: MessageListProps) {
     </motion.div>
   );
 }
-

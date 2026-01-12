@@ -35,17 +35,20 @@ UI Layer -> Adapter Layer -> Service Layer (Core) -> Repository Interfaces (Core
 **Location**: `packages/ui/` + `apps/*/components/`
 
 **Responsibilities**:
+
 - Render user interface
 - Handle user interactions
 - Responsive layout
 
 **Tech Stack**:
+
 - React 19 + TypeScript
 - shadcn/ui + Radix UI
 - Tailwind CSS
 - Framer Motion (animations)
 
 **Component Categories**:
+
 ```
 packages/ui/
 ├── components/
@@ -79,16 +82,19 @@ packages/ui/
 **Location**: `packages/core/stores/`
 
 **Responsibilities**:
+
 - Manage application state
 - Handle state changes
 - State persistence
 
 **Tech Stack**:
+
 - Zustand
 - Immer (immutable data updates)
 - zustand/middleware (persistence)
 
 **Store Design**:
+
 ```typescript
 // Chat state
 interface ChatStore {
@@ -104,7 +110,7 @@ interface ChatStore {
 
 // Settings state
 interface SettingsStore {
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   language: string;
   defaultModel: string;
 
@@ -131,11 +137,13 @@ interface KnowledgeStore {
 **Location**: `packages/core/`
 
 **Responsibilities**:
+
 - Encapsulate business logic
 - Platform-agnostic core functionality
 - Data processing and transformation
 
 **Module Structure**:
+
 ```
 packages/core/
 ├── chat/                  # Chat core logic
@@ -176,11 +184,13 @@ packages/core/
 **Location**: `packages/ai-sdk/`
 
 **Responsibilities**:
+
 - Unified AI model calling interface
 - Multi-provider support
 - Streaming response handling
 
 **Supported Model Providers**:
+
 ```
 packages/ai-sdk/
 ├── providers/
@@ -195,6 +205,7 @@ packages/ai-sdk/
 ```
 
 **Unified Interface Design**:
+
 ```typescript
 interface AIProvider {
   // Basic chat
@@ -218,6 +229,7 @@ interface AIProvider {
 #### 5.1 Desktop Storage
 
 **Tech Stack**:
+
 - SQLite (better-sqlite3) - Structured data
 - Local filesystem - File storage
 - electron-store - Configuration storage
@@ -225,6 +237,7 @@ interface AIProvider {
 #### 5.2 Web Storage
 
 **Tech Stack**:
+
 - PostgreSQL + pgvector - Structured data + Vector search
 - Redis - Cache + Agent state
 - Local filesystem / S3 - File storage
@@ -252,32 +265,27 @@ apps/desktop/
 ```
 
 **IPC Communication Design**:
+
 ```typescript
 // preload/index.ts
-contextBridge.exposeInMainWorld('electron', {
+contextBridge.exposeInMainWorld("electron", {
   // Database operations
   db: {
-    query: (sql: string, params?: any[]) =>
-      ipcRenderer.invoke('db:query', sql, params),
-    run: (sql: string, params?: any[]) =>
-      ipcRenderer.invoke('db:run', sql, params),
+    query: (sql: string, params?: any[]) => ipcRenderer.invoke("db:query", sql, params),
+    run: (sql: string, params?: any[]) => ipcRenderer.invoke("db:run", sql, params),
   },
 
   // File operations
   fs: {
-    readFile: (path: string) =>
-      ipcRenderer.invoke('fs:readFile', path),
-    writeFile: (path: string, data: any) =>
-      ipcRenderer.invoke('fs:writeFile', path, data),
-    selectFile: (options?: any) =>
-      ipcRenderer.invoke('fs:selectFile', options),
+    readFile: (path: string) => ipcRenderer.invoke("fs:readFile", path),
+    writeFile: (path: string, data: any) => ipcRenderer.invoke("fs:writeFile", path, data),
+    selectFile: (options?: any) => ipcRenderer.invoke("fs:selectFile", options),
   },
 
   // System operations
   system: {
-    getAppPath: () => ipcRenderer.invoke('system:getAppPath'),
-    openExternal: (url: string) =>
-      ipcRenderer.invoke('system:openExternal', url),
+    getAppPath: () => ipcRenderer.invoke("system:getAppPath"),
+    openExternal: (url: string) => ipcRenderer.invoke("system:openExternal", url),
   },
 });
 ```
@@ -395,11 +403,13 @@ apps/web/
 ### Authentication & Authorization
 
 **Web Version**:
+
 - Better Auth for user authentication
 - JWT Token session management
 - Role-Based Access Control (RBAC)
 
 **Desktop Version**:
+
 - Optional local password protection
 - Encrypted data storage
 

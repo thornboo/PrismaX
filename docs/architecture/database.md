@@ -6,11 +6,11 @@
 
 ## Database Selection
 
-| Scenario | Database | Description |
-|----------|----------|-------------|
-| Web Version | PostgreSQL + pgvector | Vector search support (Soft Delete enforced) |
-| Desktop Version | SQLite + sqlite-vss | Lightweight local storage (Hard Delete allowed) |
-| Cache | Redis | Agent state, session cache |
+| Scenario        | Database              | Description                                     |
+| --------------- | --------------------- | ----------------------------------------------- |
+| Web Version     | PostgreSQL + pgvector | Vector search support (Soft Delete enforced)    |
+| Desktop Version | SQLite + sqlite-vss   | Lightweight local storage (Hard Delete allowed) |
+| Cache           | Redis                 | Agent state, session cache                      |
 
 ### Data Deletion Strategy (Strict Compliance)
 
@@ -132,6 +132,7 @@ CREATE INDEX idx_messages_created_at ON messages(created_at);
 > Designed for heavy knowledge base usage scenarios (100+ documents per user).
 
 **Optimization Strategy**:
+
 1. **Vector Separation**: In Core Architecture, define `IVectorStore` interface. Web uses `pgvector`, but ready to switch to Qdrant/Milvus if scaling needed.
 2. **Chunking Strategy**: Adaptive chunking based on content type (Code vs Text).
 
@@ -412,52 +413,54 @@ CREATE INDEX idx_document_chunks_document_id ON document_chunks(document_id);
 
 ```typescript
 // packages/database/schema/users.ts
-import { pgTable, uuid, varchar, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).unique().notNull(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  name: varchar('name', { length: 100 }),
-  avatar: varchar('avatar', { length: 500 }),
-  role: varchar('role', { length: 50 }).default('user'),
-  status: varchar('status', { length: 50 }).default('active'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  name: varchar("name", { length: 100 }),
+  avatar: varchar("avatar", { length: 500 }),
+  role: varchar("role", { length: 50 }).default("user"),
+  status: varchar("status", { length: 50 }).default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // packages/database/schema/conversations.ts
-import { pgTable, uuid, varchar, text, boolean, timestamp } from 'drizzle-orm/pg-core';
-import { users } from './users';
-import { folders } from './folders';
+import { pgTable, uuid, varchar, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { users } from "./users";
+import { folders } from "./folders";
 
-export const conversations = pgTable('conversations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }),
-  model: varchar('model', { length: 100 }),
-  systemPrompt: text('system_prompt'),
-  folderId: uuid('folder_id').references(() => folders.id, { onDelete: 'set null' }),
-  isPinned: boolean('is_pinned').default(false),
-  isArchived: boolean('is_archived').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+export const conversations = pgTable("conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }),
+  model: varchar("model", { length: 100 }),
+  systemPrompt: text("system_prompt"),
+  folderId: uuid("folder_id").references(() => folders.id, { onDelete: "set null" }),
+  isPinned: boolean("is_pinned").default(false),
+  isArchived: boolean("is_archived").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // packages/database/schema/messages.ts
-import { pgTable, uuid, varchar, text, integer, timestamp, jsonb } from 'drizzle-orm/pg-core';
-import { conversations } from './conversations';
+import { pgTable, uuid, varchar, text, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { conversations } from "./conversations";
 
-export const messages = pgTable('messages', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  conversationId: uuid('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }),
-  role: varchar('role', { length: 50 }).notNull(),
-  content: text('content').notNull(),
-  model: varchar('model', { length: 100 }),
-  tokensUsed: integer('tokens_used'),
-  metadata: jsonb('metadata').default({}),
-  parentId: uuid('parent_id'),
-  createdAt: timestamp('created_at').defaultNow(),
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").references(() => conversations.id, {
+    onDelete: "cascade",
+  }),
+  role: varchar("role", { length: 50 }).notNull(),
+  content: text("content").notNull(),
+  model: varchar("model", { length: 100 }),
+  tokensUsed: integer("tokens_used"),
+  metadata: jsonb("metadata").default({}),
+  parentId: uuid("parent_id"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 ```
 
@@ -500,7 +503,7 @@ const migrations = [
 ];
 
 function runMigrations(db: Database) {
-  const currentVersion = db.pragma('user_version', { simple: true }) as number;
+  const currentVersion = db.pragma("user_version", { simple: true }) as number;
 
   for (const migration of migrations) {
     if (migration.version > currentVersion) {

@@ -46,6 +46,7 @@
 ```
 
 **Elements**:
+
 - Logo and app name
 - Global search button
 - Settings entry
@@ -76,6 +77,7 @@
 ```
 
 **Features**:
+
 - New session button
 - Session list (grouped by time)
 - Quick navigation (Knowledge, Assistants, Plugins)
@@ -84,7 +86,7 @@
 
 ### 3. Chat Area
 
-```
+````
 +-----------------------------------------------------------------+
 |                                                                 |
 |  User                                              2024-01-11   |
@@ -107,9 +109,10 @@
 |  +-------------------------------------------------------------+ |
 |                                                                 |
 +-----------------------------------------------------------------+
-```
+````
 
 **Features**:
+
 - Message bubble display
 - User/AI role distinction
 - Timestamp display
@@ -130,6 +133,7 @@
 ```
 
 **Features**:
+
 - Multi-line text input
 - File upload button
 - Voice input button

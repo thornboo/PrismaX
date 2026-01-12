@@ -19,12 +19,8 @@ export default function Page() {
         <header className="border-b border-white/10 bg-zinc-950/60 px-6 py-4 backdrop-blur">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-zinc-200">
-                PrismaX Desktop
-              </div>
-              <div className="mt-1 truncate text-xs text-zinc-500">
-                会话：{conversationId}
-              </div>
+              <div className="truncate text-sm font-semibold text-zinc-200">PrismaX Desktop</div>
+              <div className="mt-1 truncate text-xs text-zinc-500">会话：{conversationId}</div>
             </div>
             <div className="text-xs text-zinc-500">
               {status === "streaming" ? "生成中…" : status === "error" ? "错误" : "就绪"}

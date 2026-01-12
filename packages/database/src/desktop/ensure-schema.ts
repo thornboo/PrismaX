@@ -3,7 +3,8 @@ import Database from "better-sqlite3";
 export function ensureDesktopSchema(sqlite: Database.Database) {
   sqlite.pragma("foreign_keys = ON");
 
-  sqlite.exec(`
+  sqlite.exec(
+    `
 CREATE TABLE IF NOT EXISTS "folders" (
   "id" TEXT PRIMARY KEY NOT NULL,
   "name" TEXT NOT NULL,
@@ -64,5 +65,6 @@ CREATE TABLE IF NOT EXISTS "archival_memories" (
   FOREIGN KEY ("assistant_id") REFERENCES "assistants" ("id") ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS "archival_memories_assistantId_idx" ON "archival_memories" ("assistant_id");
-`.trim());
+`.trim(),
+  );
 }

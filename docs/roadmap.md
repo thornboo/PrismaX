@@ -28,16 +28,16 @@ v0.1.0 (Web MVP)      v0.2.0 (Desktop)    v0.3.0              v0.4.0            
 
 ### Feature Scope
 
-| Feature | Priority | Description |
-|---------|----------|-------------|
-| Basic Chat | P0 | Single/multi-turn conversation, streaming response |
-| Multi-model Support | P0 | OpenAI, Claude, Ollama |
-| Session Management | P0 | Create, delete, rename, history |
-| Web Persistence | P0 | PostgreSQL for sessions and messages |
-| API Key Management | P0 | Secure storage, multiple providers |
-| Basic Settings | P1 | Theme toggle, default model, temperature |
-| Markdown Rendering | P1 | Code highlighting, math formulas |
-| Message Actions | P1 | Copy, regenerate, edit |
+| Feature             | Priority | Description                                        |
+| ------------------- | -------- | -------------------------------------------------- |
+| Basic Chat          | P0       | Single/multi-turn conversation, streaming response |
+| Multi-model Support | P0       | OpenAI, Claude, Ollama                             |
+| Session Management  | P0       | Create, delete, rename, history                    |
+| Web Persistence     | P0       | PostgreSQL for sessions and messages               |
+| API Key Management  | P0       | Secure storage, multiple providers                 |
+| Basic Settings      | P1       | Theme toggle, default model, temperature           |
+| Markdown Rendering  | P1       | Code highlighting, math formulas                   |
+| Message Actions     | P1       | Copy, regenerate, edit                             |
 
 ### Development Plan
 
@@ -76,13 +76,13 @@ v0.1.0 (Web MVP)      v0.2.0 (Desktop)    v0.3.0              v0.4.0            
 
 ### Feature Scope
 
-| Feature | Description |
-|---------|-------------|
-| Electron Shell | Main process/preload/window management |
-| Renderer Reuse | Reuse `apps/web` as renderer (dev: load dev server, prod: load build artifacts) |
-| IPC/Permission Boundary | Main process capabilities exposed via IPC with strict permission control |
-| Auto-update (optional) | Keep toggle available, ensure MVP path is controllable |
-| Desktop Storage Adapter (optional) | Optional SQLite for desktop (isolated from Web data layer) |
+| Feature                            | Description                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| Electron Shell                     | Main process/preload/window management                                          |
+| Renderer Reuse                     | Reuse `apps/web` as renderer (dev: load dev server, prod: load build artifacts) |
+| IPC/Permission Boundary            | Main process capabilities exposed via IPC with strict permission control        |
+| Auto-update (optional)             | Keep toggle available, ensure MVP path is controllable                          |
+| Desktop Storage Adapter (optional) | Optional SQLite for desktop (isolated from Web data layer)                      |
 
 ---
 
@@ -94,14 +94,14 @@ v0.1.0 (Web MVP)      v0.2.0 (Desktop)    v0.3.0              v0.4.0            
 
 ### Feature Scope
 
-| Feature | Description |
-|---------|-------------|
-| Document Upload | Support PDF, TXT, MD, DOCX formats |
-| Document Parsing | Text extraction and intelligent chunking |
-| Vector Embedding | Local embedding model or API |
-| Vector Storage | SQLite + sqlite-vss |
-| RAG Retrieval | Similarity search and context enhancement |
-| Knowledge Base Management | Create, delete, document management UI |
+| Feature                   | Description                               |
+| ------------------------- | ----------------------------------------- |
+| Document Upload           | Support PDF, TXT, MD, DOCX formats        |
+| Document Parsing          | Text extraction and intelligent chunking  |
+| Vector Embedding          | Local embedding model or API              |
+| Vector Storage            | SQLite + sqlite-vss                       |
+| RAG Retrieval             | Similarity search and context enhancement |
+| Knowledge Base Management | Create, delete, document management UI    |
 
 ### Development Plan
 
@@ -124,14 +124,14 @@ v0.1.0 (Web MVP)      v0.2.0 (Desktop)    v0.3.0              v0.4.0            
 
 ### Feature Scope
 
-| Feature | Description |
-|---------|-------------|
-| Tool Calling Framework | Function Calling support |
-| Built-in Tools | Web search, URL fetch, code execution |
-| MCP Protocol | Model Context Protocol client |
-| Agent Runtime | ReAct mode execution engine |
-| Plugin System | Basic plugin architecture |
-| Plugin API | Tool, UI, Storage API |
+| Feature                | Description                           |
+| ---------------------- | ------------------------------------- |
+| Tool Calling Framework | Function Calling support              |
+| Built-in Tools         | Web search, URL fetch, code execution |
+| MCP Protocol           | Model Context Protocol client         |
+| Agent Runtime          | ReAct mode execution engine           |
+| Plugin System          | Basic plugin architecture             |
+| Plugin API             | Tool, UI, Storage API                 |
 
 ### Development Plan
 
@@ -152,13 +152,13 @@ v0.1.0 (Web MVP)      v0.2.0 (Desktop)    v0.3.0              v0.4.0            
 
 ### Feature Scope
 
-| Feature | Description |
-|---------|-------------|
-| Plugin Marketplace | Plugin discovery, installation, updates |
-| Cloud Sync | Optional data synchronization service |
-| Web Version | Browser access support |
-| Assistant System | Preset and custom assistants |
-| Multi-language | Internationalization support |
+| Feature                  | Description                              |
+| ------------------------ | ---------------------------------------- |
+| Plugin Marketplace       | Plugin discovery, installation, updates  |
+| Cloud Sync               | Optional data synchronization service    |
+| Web Version              | Browser access support                   |
+| Assistant System         | Preset and custom assistants             |
+| Multi-language           | Internationalization support             |
 | Performance Optimization | Startup speed, memory usage optimization |
 
 ### Future Plans
@@ -172,20 +172,20 @@ v0.1.0 (Web MVP)      v0.2.0 (Desktop)    v0.3.0              v0.4.0            
 
 ## Tech Stack Versions
 
-| Dependency | Version | Notes |
-|------------|---------|-------|
-| Node.js | 20 LTS | Long-term support |
-| pnpm | 10.x | Package manager |
-| Turbo | 2.x | Monorepo build |
-| Electron | 30.x | Latest stable |
-| Next.js | 15.x | App Router |
-| React | 19.x | Stable |
-| TypeScript | 5.4+ | Latest features |
-| Zustand | 4.x | State management |
-| Drizzle ORM | 0.30+ | Database ORM |
-| better-sqlite3 | 11.x | SQLite driver |
-| shadcn/ui | latest | UI components |
-| Tailwind CSS | 3.4+ | Styling |
+| Dependency     | Version | Notes             |
+| -------------- | ------- | ----------------- |
+| Node.js        | 20 LTS  | Long-term support |
+| pnpm           | 10.x    | Package manager   |
+| Turbo          | 2.x     | Monorepo build    |
+| Electron       | 30.x    | Latest stable     |
+| Next.js        | 15.x    | App Router        |
+| React          | 19.x    | Stable            |
+| TypeScript     | 5.4+    | Latest features   |
+| Zustand        | 4.x     | State management  |
+| Drizzle ORM    | 0.30+   | Database ORM      |
+| better-sqlite3 | 11.x    | SQLite driver     |
+| shadcn/ui      | latest  | UI components     |
+| Tailwind CSS   | 3.4+    | Styling           |
 
 ---
 

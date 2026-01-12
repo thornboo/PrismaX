@@ -93,9 +93,7 @@ export function SignUpForm({ callbackURL }: SignUpFormProps) {
           />
         </label>
 
-        {errorMessage ? (
-          <p className="text-sm text-red-600">{errorMessage}</p>
-        ) : null}
+        {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
 
         <button
           type="submit"

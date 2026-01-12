@@ -137,8 +137,9 @@ export class ChatService {
     ];
 
     const streamResult = await this.aiProvider.streamChat(modelMessages, { model: modelId });
-    const tokenStream =
-      isAsyncIterable<string>(streamResult) ? streamResult : isAsyncIterable<string>((streamResult as any)?.textStream)
+    const tokenStream = isAsyncIterable<string>(streamResult)
+      ? streamResult
+      : isAsyncIterable<string>((streamResult as any)?.textStream)
         ? (streamResult as any).textStream
         : null;
 

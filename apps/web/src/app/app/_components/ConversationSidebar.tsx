@@ -2,10 +2,7 @@ import Link from "next/link";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { createConversationAction } from "../actions";
-import type {
-  ConversationMeta,
-  ConversationRow,
-} from "../_lib/conversation-sidebar-data";
+import type { ConversationMeta, ConversationRow } from "../_lib/conversation-sidebar-data";
 
 function formatUpdatedAt(date: Date) {
   return date.toLocaleString("zh-CN", {
@@ -130,10 +127,7 @@ export function ConversationSidebar({
       </nav>
 
       <div className="flex items-center justify-between gap-3 border-t border-white/10 p-4">
-        <Link
-          href="/settings"
-          className="text-sm text-zinc-300 underline underline-offset-4"
-        >
+        <Link href="/settings" className="text-sm text-zinc-300 underline underline-offset-4">
           设置
         </Link>
         <div className="text-xs text-zinc-500">OpenAI / 第三方</div>

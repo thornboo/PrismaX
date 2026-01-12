@@ -7,9 +7,7 @@ type PageProps = {
 export default async function SignUpPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const callbackURLParam = params.callbackURL;
-  const callbackURL =
-    typeof callbackURLParam === "string" ? callbackURLParam : "/app";
+  const callbackURL = typeof callbackURLParam === "string" ? callbackURLParam : "/app";
 
   return <SignUpForm callbackURL={callbackURL} />;
 }
-

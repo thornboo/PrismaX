@@ -15,7 +15,9 @@ export class NativeMemoryRepository implements IMemoryProvider {
     const rows = await this.db
       .select()
       .from(agentMemories)
-      .where(and(eq(agentMemories.assistantId, input.assistantId), eq(agentMemories.label, input.label)))
+      .where(
+        and(eq(agentMemories.assistantId, input.assistantId), eq(agentMemories.label, input.label)),
+      )
       .limit(1);
 
     const row = rows[0];
@@ -70,7 +72,12 @@ export class NativeMemoryRepository implements IMemoryProvider {
     const rows = await this.db
       .select()
       .from(archivalMemories)
-      .where(and(eq(archivalMemories.assistantId, input.assistantId), like(archivalMemories.content, pattern)))
+      .where(
+        and(
+          eq(archivalMemories.assistantId, input.assistantId),
+          like(archivalMemories.content, pattern),
+        ),
+      )
       .orderBy(desc(archivalMemories.createdAt))
       .limit(Math.max(1, Math.min(limit, 50)));
 
@@ -83,4 +90,3 @@ export class NativeMemoryRepository implements IMemoryProvider {
     }));
   }
 }
-

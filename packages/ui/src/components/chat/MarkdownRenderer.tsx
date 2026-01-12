@@ -57,4 +57,3 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     </div>
   );
 }
-

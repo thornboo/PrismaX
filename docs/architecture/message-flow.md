@@ -56,7 +56,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
     const userMessage: Message = {
       id: generateId(),
       conversationId: activeConversationId,
-      role: 'user',
+      role: "user",
       content,
       createdAt: new Date(),
     };
@@ -65,10 +65,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
     set((state) => ({
       messages: {
         ...state.messages,
-        [activeConversationId]: [
-          ...state.messages[activeConversationId],
-          userMessage,
-        ],
+        [activeConversationId]: [...state.messages[activeConversationId], userMessage],
       },
     }));
 
@@ -76,18 +73,15 @@ const useChatStore = create<ChatStore>((set, get) => ({
     const assistantMessage: Message = {
       id: generateId(),
       conversationId: activeConversationId,
-      role: 'assistant',
-      content: '',
+      role: "assistant",
+      content: "",
       createdAt: new Date(),
     };
 
     set((state) => ({
       messages: {
         ...state.messages,
-        [activeConversationId]: [
-          ...state.messages[activeConversationId],
-          assistantMessage,
-        ],
+        [activeConversationId]: [...state.messages[activeConversationId], assistantMessage],
       },
       isGenerating: true,
     }));
@@ -105,11 +99,10 @@ const useChatStore = create<ChatStore>((set, get) => ({
         set((state) => ({
           messages: {
             ...state.messages,
-            [activeConversationId]: state.messages[activeConversationId].map(
-              (msg) =>
-                msg.id === assistantMessage.id
-                  ? { ...msg, content: msg.content + chunk.content }
-                  : msg
+            [activeConversationId]: state.messages[activeConversationId].map((msg) =>
+              msg.id === assistantMessage.id
+                ? { ...msg, content: msg.content + chunk.content }
+                : msg,
             ),
           },
         }));
@@ -129,7 +122,7 @@ async function* sendMessage(params: SendMessageParams) {
   const { messages, model, knowledgeBaseIds } = params;
 
   // 1. Knowledge base retrieval (if enabled)
-  let context = '';
+  let context = "";
   if (knowledgeBaseIds?.length) {
     const results = await knowledgeService.search({
       query: messages[messages.length - 1].content,
@@ -166,33 +159,31 @@ async function* sendMessage(params: SendMessageParams) {
 
 ```typescript
 // streaming/parser.ts
-async function* parseSSEStream(
-  response: Response
-): AsyncIterable<ChatChunk> {
+async function* parseSSEStream(response: Response): AsyncIterable<ChatChunk> {
   const reader = response.body?.getReader();
-  if (!reader) throw new Error('No response body');
+  if (!reader) throw new Error("No response body");
 
   const decoder = new TextDecoder();
-  let buffer = '';
+  let buffer = "";
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
 
     for (const line of lines) {
-      if (line.startsWith('data: ')) {
+      if (line.startsWith("data: ")) {
         const data = line.slice(6);
-        if (data === '[DONE]') return;
+        if (data === "[DONE]") return;
 
         try {
           const parsed = JSON.parse(data);
           yield {
-            type: 'text',
-            content: parsed.choices[0]?.delta?.content || '',
+            type: "text",
+            content: parsed.choices[0]?.delta?.content || "",
           };
         } catch {
           // Ignore parse errors
@@ -210,20 +201,20 @@ async function* parseSSEStream(
 function transformResponse(chunk: ProviderChunk): ChatChunk {
   // Unify response format from different providers
   switch (chunk.provider) {
-    case 'openai':
+    case "openai":
       return {
-        type: 'text',
-        content: chunk.choices[0]?.delta?.content || '',
+        type: "text",
+        content: chunk.choices[0]?.delta?.content || "",
       };
-    case 'anthropic':
+    case "anthropic":
       return {
-        type: 'text',
-        content: chunk.delta?.text || '',
+        type: "text",
+        content: chunk.delta?.text || "",
       };
     default:
       return {
-        type: 'text',
-        content: chunk.content || '',
+        type: "text",
+        content: chunk.content || "",
       };
   }
 }
@@ -284,7 +275,7 @@ class LocalMessageService {
       message.role,
       message.content,
       message.model,
-      message.createdAt.toISOString()
+      message.createdAt.toISOString(),
     );
 
     return message;
@@ -326,7 +317,7 @@ regenerateMessage: async (messageId: string) => {
     messages: {
       ...state.messages,
       [activeConversationId]: state.messages[activeConversationId].map((msg) =>
-        msg.id === messageId ? { ...msg, content: '' } : msg
+        msg.id === messageId ? { ...msg, content: "" } : msg,
       ),
     },
     isGenerating: true,
@@ -343,11 +334,8 @@ regenerateMessage: async (messageId: string) => {
       set((state) => ({
         messages: {
           ...state.messages,
-          [activeConversationId]: state.messages[activeConversationId].map(
-            (msg) =>
-              msg.id === messageId
-                ? { ...msg, content: msg.content + chunk.content }
-                : msg
+          [activeConversationId]: state.messages[activeConversationId].map((msg) =>
+            msg.id === messageId ? { ...msg, content: msg.content + chunk.content } : msg,
           ),
         },
       }));
@@ -391,14 +379,12 @@ editMessage: async (messageId: string, newContent: string) => {
       ...state.messages,
       [activeConversationId]: state.messages[activeConversationId]
         .slice(0, messageIndex + 1)
-        .map((msg) =>
-          msg.id === messageId ? { ...msg, content: newContent } : msg
-        ),
+        .map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg)),
     },
   }));
 
   // 3. If user message, regenerate AI response
-  if (message.role === 'user') {
+  if (message.role === "user") {
     await get().sendMessage(newContent, { skipUserMessage: true });
   }
 };
@@ -432,7 +418,7 @@ sendMessage: async (content: string) => {
       // Process chunk
     }
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error.name === "AbortError") {
       // User stopped, not an error
       return;
     }
@@ -452,13 +438,13 @@ stopGeneration: () => {
 
 ### Error Types
 
-| Error Type | Description | Handling |
-|------------|-------------|----------|
-| NetworkError | Network error | Prompt retry |
-| AuthError | Authentication error | Prompt to check API Key |
-| RateLimitError | Rate limit | Prompt to retry later |
-| ModelError | Model error | Display error message |
-| TimeoutError | Timeout | Prompt retry |
+| Error Type     | Description          | Handling                |
+| -------------- | -------------------- | ----------------------- |
+| NetworkError   | Network error        | Prompt retry            |
+| AuthError      | Authentication error | Prompt to check API Key |
+| RateLimitError | Rate limit           | Prompt to retry later   |
+| ModelError     | Model error          | Display error message   |
+| TimeoutError   | Timeout              | Prompt retry            |
 
 ### Error Handling
 
@@ -472,17 +458,16 @@ sendMessage: async (content: string) => {
     set((state) => ({
       messages: {
         ...state.messages,
-        [activeConversationId]: state.messages[activeConversationId].map(
-          (msg) =>
-            msg.id === assistantMessage.id
-              ? {
-                  ...msg,
-                  error: {
-                    type: getErrorType(error),
-                    message: getErrorMessage(error),
-                  },
-                }
-              : msg
+        [activeConversationId]: state.messages[activeConversationId].map((msg) =>
+          msg.id === assistantMessage.id
+            ? {
+                ...msg,
+                error: {
+                  type: getErrorType(error),
+                  message: getErrorMessage(error),
+                },
+              }
+            : msg,
         ),
       },
       isGenerating: false,
@@ -550,7 +535,7 @@ function ChatList({ messages }: { messages: Message[] }) {
 // Use React Query to cache messages
 const useMessages = (conversationId: string) => {
   return useQuery({
-    queryKey: ['messages', conversationId],
+    queryKey: ["messages", conversationId],
     queryFn: () => messageService.getMessages(conversationId),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -566,6 +551,6 @@ const debouncedSaveDraft = useMemo(
     debounce((content: string) => {
       localStorage.setItem(`draft-${conversationId}`, content);
     }, 500),
-  [conversationId]
+  [conversationId],
 );
 ```

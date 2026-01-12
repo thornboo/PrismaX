@@ -52,8 +52,8 @@ interface JWTPayload {
 
 class JWTService {
   private readonly secret: string;
-  private readonly accessTokenExpiry = '15m';
-  private readonly refreshTokenExpiry = '7d';
+  private readonly accessTokenExpiry = "15m";
+  private readonly refreshTokenExpiry = "7d";
 
   generateTokens(user: User): TokenPair {
     const payload: JWTPayload = {
@@ -68,11 +68,9 @@ class JWTService {
       expiresIn: this.accessTokenExpiry,
     });
 
-    const refreshToken = jwt.sign(
-      { userId: user.id, type: 'refresh' },
-      this.secret,
-      { expiresIn: this.refreshTokenExpiry }
-    );
+    const refreshToken = jwt.sign({ userId: user.id, type: "refresh" }, this.secret, {
+      expiresIn: this.refreshTokenExpiry,
+    });
 
     return { accessToken, refreshToken };
   }
@@ -81,7 +79,7 @@ class JWTService {
     try {
       return jwt.verify(token, this.secret) as JWTPayload;
     } catch (error) {
-      throw new AuthenticationError('Invalid token');
+      throw new AuthenticationError("Invalid token");
     }
   }
 
@@ -90,19 +88,19 @@ class JWTService {
 
     // Check if blacklisted
     if (await this.isTokenBlacklisted(refreshToken)) {
-      throw new AuthenticationError('Token has been revoked');
+      throw new AuthenticationError("Token has been revoked");
     }
 
     const user = await userService.findById(payload.userId);
     if (!user) {
-      throw new AuthenticationError('User not found');
+      throw new AuthenticationError("User not found");
     }
 
     return this.generateTokens(user).accessToken;
   }
 
   private async isTokenBlacklisted(token: string): Promise<boolean> {
-    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
     return await redis.exists(`blacklist:${hash}`);
   }
 }
@@ -112,7 +110,7 @@ class JWTService {
 
 ```typescript
 // auth/password.ts
-import argon2 from 'argon2';
+import argon2 from "argon2";
 
 class PasswordService {
   private readonly options: argon2.Options = {
@@ -138,19 +136,19 @@ class PasswordService {
     const errors: string[] = [];
 
     if (password.length < 8) {
-      errors.push('Password must be at least 8 characters');
+      errors.push("Password must be at least 8 characters");
     }
     if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain uppercase letter');
+      errors.push("Password must contain uppercase letter");
     }
     if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain lowercase letter');
+      errors.push("Password must contain lowercase letter");
     }
     if (!/[0-9]/.test(password)) {
-      errors.push('Password must contain number');
+      errors.push("Password must contain number");
     }
     if (!/[^A-Za-z0-9]/.test(password)) {
-      errors.push('Password must contain special character');
+      errors.push("Password must contain special character");
     }
 
     return {
@@ -168,8 +166,8 @@ Desktop version is single-user mode, using local key protection:
 ```typescript
 // desktop/auth.ts
 class DesktopAuth {
-  private keytar = require('keytar');
-  private readonly serviceName = 'PrismaX';
+  private keytar = require("keytar");
+  private readonly serviceName = "PrismaX";
 
   async setMasterPassword(password: string): Promise<void> {
     const salt = crypto.randomBytes(32);
@@ -177,39 +175,27 @@ class DesktopAuth {
 
     await this.keytar.setPassword(
       this.serviceName,
-      'master-password',
-      JSON.stringify({ hash, salt: salt.toString('hex') })
+      "master-password",
+      JSON.stringify({ hash, salt: salt.toString("hex") }),
     );
   }
 
   async verifyMasterPassword(password: string): Promise<boolean> {
-    const stored = await this.keytar.getPassword(
-      this.serviceName,
-      'master-password'
-    );
+    const stored = await this.keytar.getPassword(this.serviceName, "master-password");
 
     if (!stored) return false;
 
     const { hash, salt } = JSON.parse(stored);
-    const inputHash = await this.hashPassword(
-      password,
-      Buffer.from(salt, 'hex')
-    );
+    const inputHash = await this.hashPassword(password, Buffer.from(salt, "hex"));
 
-    return crypto.timingSafeEqual(
-      Buffer.from(hash),
-      Buffer.from(inputHash)
-    );
+    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(inputHash));
   }
 
-  private async hashPassword(
-    password: string,
-    salt: Buffer
-  ): Promise<string> {
+  private async hashPassword(password: string, salt: Buffer): Promise<string> {
     return new Promise((resolve, reject) => {
-      crypto.pbkdf2(password, salt, 100000, 64, 'sha512', (err, key) => {
+      crypto.pbkdf2(password, salt, 100000, 64, "sha512", (err, key) => {
         if (err) reject(err);
-        else resolve(key.toString('hex'));
+        else resolve(key.toString("hex"));
       });
     });
   }
@@ -225,7 +211,7 @@ class DesktopAuth {
 ```typescript
 // security/key-manager.ts
 class APIKeyManager {
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly algorithm = "aes-256-gcm";
   private masterKey: Buffer;
 
   constructor(masterKey: Buffer) {
@@ -236,15 +222,15 @@ class APIKeyManager {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.masterKey, iv);
 
-    let encrypted = cipher.update(apiKey, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
+    let encrypted = cipher.update(apiKey, "utf8", "hex");
+    encrypted += cipher.final("hex");
 
     const authTag = cipher.getAuthTag();
 
     return {
       encrypted,
-      iv: iv.toString('hex'),
-      authTag: authTag.toString('hex'),
+      iv: iv.toString("hex"),
+      authTag: authTag.toString("hex"),
     };
   }
 
@@ -252,13 +238,13 @@ class APIKeyManager {
     const decipher = crypto.createDecipheriv(
       this.algorithm,
       this.masterKey,
-      Buffer.from(encryptedKey.iv, 'hex')
+      Buffer.from(encryptedKey.iv, "hex"),
     );
 
-    decipher.setAuthTag(Buffer.from(encryptedKey.authTag, 'hex'));
+    decipher.setAuthTag(Buffer.from(encryptedKey.authTag, "hex"));
 
-    let decrypted = decipher.update(encryptedKey.encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
+    let decrypted = decipher.update(encryptedKey.encrypted, "hex", "utf8");
+    decrypted += decipher.final("utf8");
 
     return decrypted;
   }
@@ -312,14 +298,14 @@ All network communication uses TLS 1.3:
 ```typescript
 // server/https.ts
 const httpsOptions = {
-  key: fs.readFileSync('private-key.pem'),
-  cert: fs.readFileSync('certificate.pem'),
-  minVersion: 'TLSv1.3',
+  key: fs.readFileSync("private-key.pem"),
+  cert: fs.readFileSync("certificate.pem"),
+  minVersion: "TLSv1.3",
   ciphers: [
-    'TLS_AES_256_GCM_SHA384',
-    'TLS_CHACHA20_POLY1305_SHA256',
-    'TLS_AES_128_GCM_SHA256',
-  ].join(':'),
+    "TLS_AES_256_GCM_SHA384",
+    "TLS_CHACHA20_POLY1305_SHA256",
+    "TLS_AES_128_GCM_SHA256",
+  ].join(":"),
 };
 ```
 
@@ -331,30 +317,30 @@ class DataEncryption {
   // Sensitive field encryption
   encryptField(value: string, fieldKey: Buffer): string {
     const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv('aes-256-gcm', fieldKey, iv);
+    const cipher = crypto.createCipheriv("aes-256-gcm", fieldKey, iv);
 
-    let encrypted = cipher.update(value, 'utf8');
+    let encrypted = cipher.update(value, "utf8");
     encrypted = Buffer.concat([encrypted, cipher.final()]);
 
     const authTag = cipher.getAuthTag();
 
-    return Buffer.concat([iv, authTag, encrypted]).toString('base64');
+    return Buffer.concat([iv, authTag, encrypted]).toString("base64");
   }
 
   decryptField(encrypted: string, fieldKey: Buffer): string {
-    const data = Buffer.from(encrypted, 'base64');
+    const data = Buffer.from(encrypted, "base64");
 
     const iv = data.subarray(0, 12);
     const authTag = data.subarray(12, 28);
     const ciphertext = data.subarray(28);
 
-    const decipher = crypto.createDecipheriv('aes-256-gcm', fieldKey, iv);
+    const decipher = crypto.createDecipheriv("aes-256-gcm", fieldKey, iv);
     decipher.setAuthTag(authTag);
 
     let decrypted = decipher.update(ciphertext);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 
-    return decrypted.toString('utf8');
+    return decrypted.toString("utf8");
   }
 }
 ```
@@ -363,14 +349,14 @@ class DataEncryption {
 
 ```typescript
 // database/encrypted-column.ts
-import { customType } from 'drizzle-orm/pg-core';
+import { customType } from "drizzle-orm/pg-core";
 
 const encryptedText = customType<{
   data: string;
   driverData: string;
 }>({
   dataType() {
-    return 'text';
+    return "text";
   },
   toDriver(value: string): string {
     return dataEncryption.encryptField(value, fieldKey);
@@ -381,11 +367,11 @@ const encryptedText = customType<{
 });
 
 // Usage
-export const apiKeys = pgTable('api_keys', {
-  id: uuid('id').primaryKey(),
-  provider: varchar('provider', { length: 50 }).notNull(),
-  apiKey: encryptedText('api_key').notNull(), // Auto-encrypted
-  createdAt: timestamp('created_at').defaultNow(),
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").primaryKey(),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  apiKey: encryptedText("api_key").notNull(), // Auto-encrypted
+  createdAt: timestamp("created_at").defaultNow(),
 });
 ```
 
@@ -397,18 +383,15 @@ export const apiKeys = pgTable('api_keys', {
 
 ```typescript
 // validation/schemas.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 // Message input validation
 export const messageSchema = z.object({
   content: z
     .string()
-    .min(1, 'Message cannot be empty')
-    .max(100000, 'Message too long')
-    .refine(
-      (val) => !containsMaliciousContent(val),
-      'Message contains prohibited content'
-    ),
+    .min(1, "Message cannot be empty")
+    .max(100000, "Message too long")
+    .refine((val) => !containsMaliciousContent(val), "Message contains prohibited content"),
   conversationId: z.string().uuid(),
   model: z.string().optional(),
 });
@@ -418,16 +401,13 @@ export const fileUploadSchema = z.object({
   filename: z
     .string()
     .max(255)
-    .refine(
-      (val) => !val.includes('..') && !val.includes('/'),
-      'Invalid filename'
-    ),
+    .refine((val) => !val.includes("..") && !val.includes("/"), "Invalid filename"),
   mimeType: z.enum([
-    'application/pdf',
-    'text/plain',
-    'text/markdown',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    "application/pdf",
+    "text/plain",
+    "text/markdown",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ]),
   size: z.number().max(50 * 1024 * 1024), // 50MB
 });
@@ -436,44 +416,61 @@ export const fileUploadSchema = z.object({
 export const urlSchema = z
   .string()
   .url()
-  .refine(
-    (url) => {
-      const parsed = new URL(url);
-      return ['http:', 'https:'].includes(parsed.protocol);
-    },
-    'Only HTTP(S) URLs are allowed'
-  );
+  .refine((url) => {
+    const parsed = new URL(url);
+    return ["http:", "https:"].includes(parsed.protocol);
+  }, "Only HTTP(S) URLs are allowed");
 ```
 
 ### XSS Protection
 
 ```typescript
 // security/xss.ts
-import DOMPurify from 'isomorphic-dompurify';
+import DOMPurify from "isomorphic-dompurify";
 
 class XSSProtection {
   sanitizeHTML(html: string): string {
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS: [
-        'p', 'br', 'strong', 'em', 'u', 's',
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'ul', 'ol', 'li',
-        'blockquote', 'code', 'pre',
-        'a', 'img',
-        'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        "p",
+        "br",
+        "strong",
+        "em",
+        "u",
+        "s",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "code",
+        "pre",
+        "a",
+        "img",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "th",
+        "td",
       ],
-      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class'],
+      ALLOWED_ATTR: ["href", "src", "alt", "title", "class"],
       ALLOW_DATA_ATTR: false,
     });
   }
 
   escapeForDisplay(text: string): string {
     const escapeMap: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#x27;',
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#x27;",
     };
 
     return text.replace(/[&<>"']/g, (char) => escapeMap[char]);
@@ -506,27 +503,24 @@ const messages = await db
 
 ```typescript
 // middleware/rate-limit.ts
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(100, '1 m'), // 100 per minute
+  limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 per minute
   analytics: true,
 });
 
 // Different limits for different endpoints
 const rateLimits = {
-  'message.send': { requests: 20, window: '1 m' },
-  'knowledge.upload': { requests: 10, window: '1 h' },
-  'auth.login': { requests: 5, window: '15 m' },
-  default: { requests: 100, window: '1 m' },
+  "message.send": { requests: 20, window: "1 m" },
+  "knowledge.upload": { requests: 10, window: "1 h" },
+  "auth.login": { requests: 5, window: "15 m" },
+  default: { requests: 100, window: "1 m" },
 };
 
-async function rateLimitMiddleware(
-  req: Request,
-  endpoint: string
-): Promise<void> {
+async function rateLimitMiddleware(req: Request, endpoint: string): Promise<void> {
   const ip = getClientIP(req);
   const userId = req.user?.id;
   const identifier = userId || ip;
@@ -537,9 +531,7 @@ async function rateLimitMiddleware(
     limiter: Ratelimit.slidingWindow(limit.requests, limit.window),
   });
 
-  const { success, remaining, reset } = await limiter.limit(
-    `${endpoint}:${identifier}`
-  );
+  const { success, remaining, reset } = await limiter.limit(`${endpoint}:${identifier}`);
 
   if (!success) {
     throw new RateLimitError({
@@ -558,7 +550,7 @@ async function rateLimitMiddleware(
 
 ```typescript
 // plugins/sandbox.ts
-import { VM } from 'vm2';
+import { VM } from "vm2";
 
 class PluginSandbox {
   private vm: VM;
@@ -576,20 +568,16 @@ class PluginSandbox {
     return {
       // Safe console
       console: {
-        log: (...args: unknown[]) => this.safeLog('log', args),
-        warn: (...args: unknown[]) => this.safeLog('warn', args),
-        error: (...args: unknown[]) => this.safeLog('error', args),
+        log: (...args: unknown[]) => this.safeLog("log", args),
+        warn: (...args: unknown[]) => this.safeLog("warn", args),
+        error: (...args: unknown[]) => this.safeLog("error", args),
       },
 
       // Restricted fetch
-      fetch: permissions.network
-        ? this.createSafeFetch(permissions.allowedDomains)
-        : undefined,
+      fetch: permissions.network ? this.createSafeFetch(permissions.allowedDomains) : undefined,
 
       // Restricted storage
-      storage: permissions.storage
-        ? this.createSafeStorage(permissions.storageQuota)
-        : undefined,
+      storage: permissions.storage ? this.createSafeStorage(permissions.storageQuota) : undefined,
 
       // Prohibited global objects
       process: undefined,
@@ -614,14 +602,14 @@ class PluginSandbox {
 
       // Prohibit private network access
       if (this.isPrivateIP(parsed.hostname)) {
-        throw new Error('Access to private networks is not allowed');
+        throw new Error("Access to private networks is not allowed");
       }
 
       return fetch(url, {
         ...options,
         headers: {
           ...options?.headers,
-          'User-Agent': 'PrismaX-Plugin/1.0',
+          "User-Agent": "PrismaX-Plugin/1.0",
         },
       });
     };
@@ -666,10 +654,7 @@ interface PluginPermissions {
 }
 
 class PermissionManager {
-  async requestPermission(
-    pluginId: string,
-    permission: keyof PluginPermissions
-  ): Promise<boolean> {
+  async requestPermission(pluginId: string, permission: keyof PluginPermissions): Promise<boolean> {
     // Check if already granted
     const granted = await this.getGrantedPermissions(pluginId);
     if (granted.includes(permission)) {
@@ -685,17 +670,11 @@ class PermissionManager {
     return approved;
   }
 
-  async revokePermission(
-    pluginId: string,
-    permission: keyof PluginPermissions
-  ): Promise<void> {
+  async revokePermission(pluginId: string, permission: keyof PluginPermissions): Promise<void> {
     await db
       .delete(pluginPermissions)
       .where(
-        and(
-          eq(pluginPermissions.pluginId, pluginId),
-          eq(pluginPermissions.permission, permission)
-        )
+        and(eq(pluginPermissions.pluginId, pluginId), eq(pluginPermissions.permission, permission)),
       );
   }
 }
@@ -724,7 +703,7 @@ interface AuditLog {
 }
 
 class AuditLogger {
-  async log(event: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
+  async log(event: Omit<AuditLog, "id" | "timestamp">): Promise<void> {
     const log: AuditLog = {
       id: generateId(),
       timestamp: new Date(),
@@ -742,12 +721,12 @@ class AuditLogger {
 
   private isSensitiveAction(action: string): boolean {
     const sensitiveActions = [
-      'user.delete',
-      'apiKey.create',
-      'apiKey.delete',
-      'settings.update',
-      'plugin.install',
-      'data.export',
+      "user.delete",
+      "apiKey.create",
+      "apiKey.delete",
+      "settings.update",
+      "plugin.install",
+      "data.export",
     ];
 
     return sensitiveActions.includes(action);
@@ -776,18 +755,18 @@ class AuditLogger {
 
 ### Audit Events
 
-| Event Type | Description |
-|------------|-------------|
-| `auth.login` | User login |
-| `auth.logout` | User logout |
-| `auth.passwordChange` | Password change |
-| `apiKey.create` | Create API key |
-| `apiKey.delete` | Delete API key |
-| `conversation.delete` | Delete conversation |
-| `knowledge.upload` | Upload knowledge base document |
-| `plugin.install` | Install plugin |
-| `settings.update` | Update settings |
-| `data.export` | Export data |
+| Event Type            | Description                    |
+| --------------------- | ------------------------------ |
+| `auth.login`          | User login                     |
+| `auth.logout`         | User logout                    |
+| `auth.passwordChange` | Password change                |
+| `apiKey.create`       | Create API key                 |
+| `apiKey.delete`       | Delete API key                 |
+| `conversation.delete` | Delete conversation            |
+| `knowledge.upload`    | Upload knowledge base document |
+| `plugin.install`      | Install plugin                 |
+| `settings.update`     | Update settings                |
+| `data.export`         | Export data                    |
 
 ---
 
@@ -819,20 +798,20 @@ AUDIT_LOG_ENABLED=true
 ```typescript
 // middleware/security-headers.ts
 const securityHeaders = {
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': [
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Content-Security-Policy": [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "connect-src 'self' https://api.openai.com https://api.anthropic.com",
     "frame-ancestors 'none'",
-  ].join('; '),
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  ].join("; "),
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
 ```
 

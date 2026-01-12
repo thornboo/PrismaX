@@ -19,4 +19,3 @@ export function createAIProvider(config: AIProviderConfig): IAIProvider {
       return new OpenAIProvider({ apiKey: parsed.apiKey, baseURL: parsed.baseURL });
   }
 }
-

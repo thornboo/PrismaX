@@ -14,10 +14,10 @@ export class AppError extends Error {
     public code: ErrorCode,
     public message: string, // Internal debug message (not for user)
     public status: number = 500,
-    public details?: Record<string, any>
+    public details?: Record<string, any>,
   ) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
   }
 }
 ```
@@ -31,23 +31,23 @@ All error codes must be defined here.
 
 export enum ErrorCode {
   // Auth
-  UNAUTHORIZED = 'AUTH_001',
-  FORBIDDEN = 'AUTH_002',
-  
+  UNAUTHORIZED = "AUTH_001",
+  FORBIDDEN = "AUTH_002",
+
   // Validation
-  INVALID_INPUT = 'VAL_001',
-  
+  INVALID_INPUT = "VAL_001",
+
   // Resource
-  RESOURCE_NOT_FOUND = 'RES_001',
-  RESOURCE_EXISTS = 'RES_002',
-  
+  RESOURCE_NOT_FOUND = "RES_001",
+  RESOURCE_EXISTS = "RES_002",
+
   // Business Logic
-  QUOTA_EXCEEDED = 'BIZ_001',
-  FILE_TOO_LARGE = 'BIZ_002',
-  
+  QUOTA_EXCEEDED = "BIZ_001",
+  FILE_TOO_LARGE = "BIZ_002",
+
   // System
-  INTERNAL_ERROR = 'SYS_001',
-  AI_PROVIDER_ERROR = 'SYS_002'
+  INTERNAL_ERROR = "SYS_001",
+  AI_PROVIDER_ERROR = "SYS_002",
 }
 ```
 
@@ -57,23 +57,23 @@ export enum ErrorCode {
 
 ```typescript
 if (user.quota <= 0) {
-  throw new AppError(
-    ErrorCode.QUOTA_EXCEEDED, 
-    `User ${userId} has no quota left`,
-    403,
-    { current: 0, required: 1 }
-  );
+  throw new AppError(ErrorCode.QUOTA_EXCEEDED, `User ${userId} has no quota left`, 403, {
+    current: 0,
+    required: 1,
+  });
 }
 ```
 
 ### Adapter Layer (Catching)
 
 **tRPC (Web)**:
+
 - Middleware catches `AppError`.
 - Converts to tRPC error with `code` in meta.
 - UI Client receives `code` and looks up translation.
 
 **IPC (Desktop)**:
+
 - Wrapper catches `AppError`.
 - Serializes `{ code, details }` to renderer.
 - UI Client receives object and looks up translation.

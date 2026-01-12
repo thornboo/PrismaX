@@ -7,6 +7,7 @@
 ## Overview
 
 PrismaX adopts a **Web-first** strategy:
+
 1. v0.1.0 implements Web version first to validate core architecture
 2. v0.2.0 Desktop version reuses Web rendering layer, wrapped in Electron shell
 
@@ -44,21 +45,21 @@ To maximize code reuse, abstraction layers need to be designed for key modules.
 
 ```typescript
 // packages/shared/src/platform.ts
-export type Platform = 'web' | 'desktop';
+export type Platform = "web" | "desktop";
 
 export function getPlatform(): Platform {
-  if (typeof window !== 'undefined' && window.electronAPI) {
-    return 'desktop';
+  if (typeof window !== "undefined" && window.electronAPI) {
+    return "desktop";
   }
-  return 'web';
+  return "web";
 }
 
 export function isDesktop(): boolean {
-  return getPlatform() === 'desktop';
+  return getPlatform() === "desktop";
 }
 
 export function isWeb(): boolean {
-  return getPlatform() === 'web';
+  return getPlatform() === "web";
 }
 ```
 
@@ -110,9 +111,9 @@ export interface MessageRepository {
 
 ```typescript
 // packages/database/src/adapters/postgres.ts
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-import * as schema from '../schema';
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "../schema";
 
 export class PostgresAdapter implements DatabaseAdapter {
   private pool: Pool;
@@ -163,9 +164,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     },
 
     delete: async (id: string) => {
-      await this.db
-        .delete(schema.conversations)
-        .where(eq(schema.conversations.id, id));
+      await this.db.delete(schema.conversations).where(eq(schema.conversations.id, id));
     },
   };
 
@@ -189,9 +188,9 @@ export class PostgresAdapter implements DatabaseAdapter {
 
 ```typescript
 // packages/database/src/adapters/sqlite.ts
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../schema/sqlite';
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import * as schema from "../schema/sqlite";
 
 export class SQLiteAdapter implements DatabaseAdapter {
   private sqlite: Database.Database;
@@ -223,12 +222,15 @@ export class SQLiteAdapter implements DatabaseAdapter {
     create: async (data: CreateConversationInput) => {
       const id = generateId();
       const now = new Date().toISOString();
-      this.db.insert(schema.conversations).values({
-        id,
-        ...data,
-        createdAt: now,
-        updatedAt: now,
-      }).run();
+      this.db
+        .insert(schema.conversations)
+        .values({
+          id,
+          ...data,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .run();
       return this.conversations.findById(id);
     },
 
@@ -253,7 +255,7 @@ export class SQLiteAdapter implements DatabaseAdapter {
 
 ```typescript
 // packages/database/src/index.ts
-import { getPlatform } from '@prismax/shared';
+import { getPlatform } from "@prismax/shared";
 
 let adapter: DatabaseAdapter | null = null;
 
@@ -262,12 +264,12 @@ export async function getDatabase(): Promise<DatabaseAdapter> {
 
   const platform = getPlatform();
 
-  if (platform === 'desktop') {
-    const { SQLiteAdapter } = await import('./adapters/sqlite');
+  if (platform === "desktop") {
+    const { SQLiteAdapter } = await import("./adapters/sqlite");
     const dbPath = await window.electronAPI.getDbPath();
     adapter = new SQLiteAdapter(dbPath);
   } else {
-    const { PostgresAdapter } = await import('./adapters/postgres');
+    const { PostgresAdapter } = await import("./adapters/postgres");
     adapter = new PostgresAdapter(process.env.DATABASE_URL!);
   }
 
@@ -277,7 +279,7 @@ export async function getDatabase(): Promise<DatabaseAdapter> {
   return adapter;
 }
 
-export { DatabaseAdapter } from './adapter';
+export { DatabaseAdapter } from "./adapter";
 ```
 
 ---
@@ -300,14 +302,14 @@ export interface KeyStore {
 
 ```typescript
 // packages/core/src/security/database-key-store.ts
-import { getDatabase } from '@prismax/database';
-import { encrypt, decrypt } from './crypto';
+import { getDatabase } from "@prismax/database";
+import { encrypt, decrypt } from "./crypto";
 
 export class DatabaseKeyStore implements KeyStore {
   private encryptionKey: Buffer;
 
   constructor(encryptionKey: string) {
-    this.encryptionKey = Buffer.from(encryptionKey, 'hex');
+    this.encryptionKey = Buffer.from(encryptionKey, "hex");
   }
 
   async get(provider: string): Promise<string | null> {
@@ -343,7 +345,7 @@ export class DatabaseKeyStore implements KeyStore {
 // This implementation runs in Electron main process, exposed to renderer via IPC
 
 export class KeychainStore implements KeyStore {
-  private serviceName = 'PrismaX';
+  private serviceName = "PrismaX";
 
   async get(provider: string): Promise<string | null> {
     // Call main process via IPC
@@ -365,24 +367,24 @@ export class KeychainStore implements KeyStore {
 
 // Electron main process implementation
 // apps/desktop/electron/ipc/keychain.ts
-import keytar from 'keytar';
+import keytar from "keytar";
 
-const SERVICE_NAME = 'PrismaX';
+const SERVICE_NAME = "PrismaX";
 
 export const keychainHandlers = {
-  'keychain:get': async (provider: string) => {
+  "keychain:get": async (provider: string) => {
     return keytar.getPassword(SERVICE_NAME, provider);
   },
 
-  'keychain:set': async (provider: string, key: string) => {
+  "keychain:set": async (provider: string, key: string) => {
     await keytar.setPassword(SERVICE_NAME, provider, key);
   },
 
-  'keychain:delete': async (provider: string) => {
+  "keychain:delete": async (provider: string) => {
     await keytar.deletePassword(SERVICE_NAME, provider);
   },
 
-  'keychain:list': async () => {
+  "keychain:list": async () => {
     const credentials = await keytar.findCredentials(SERVICE_NAME);
     return credentials.map((c) => c.account);
   },
@@ -393,7 +395,7 @@ export const keychainHandlers = {
 
 ```typescript
 // packages/core/src/security/index.ts
-import { getPlatform } from '@prismax/shared';
+import { getPlatform } from "@prismax/shared";
 
 let keyStore: KeyStore | null = null;
 
@@ -402,11 +404,11 @@ export async function getKeyStore(): Promise<KeyStore> {
 
   const platform = getPlatform();
 
-  if (platform === 'desktop') {
-    const { KeychainStore } = await import('./keychain-store');
+  if (platform === "desktop") {
+    const { KeychainStore } = await import("./keychain-store");
     keyStore = new KeychainStore();
   } else {
-    const { DatabaseKeyStore } = await import('./database-key-store');
+    const { DatabaseKeyStore } = await import("./database-key-store");
     keyStore = new DatabaseKeyStore(process.env.ENCRYPTION_KEY!);
   }
 
@@ -429,21 +431,21 @@ export class OllamaProvider implements AIProvider {
   private useProxy: boolean;
 
   constructor(config: OllamaConfig) {
-    this.baseUrl = config.baseUrl || 'http://localhost:11434';
+    this.baseUrl = config.baseUrl || "http://localhost:11434";
     // Web needs server-side proxy
-    this.useProxy = getPlatform() === 'web';
+    this.useProxy = getPlatform() === "web";
   }
 
   async chat(messages: Message[], options?: ChatOptions): Promise<ChatResponse> {
     const url = this.useProxy
-      ? '/api/ollama/chat'  // Server-side proxy
+      ? "/api/ollama/chat" // Server-side proxy
       : `${this.baseUrl}/api/chat`;
 
     const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: options?.model || 'llama3',
+        model: options?.model || "llama3",
         messages,
         stream: false,
       }),
@@ -453,15 +455,13 @@ export class OllamaProvider implements AIProvider {
   }
 
   async *chatStream(messages: Message[], options?: ChatOptions): AsyncIterable<ChatChunk> {
-    const url = this.useProxy
-      ? '/api/ollama/chat'
-      : `${this.baseUrl}/api/chat`;
+    const url = this.useProxy ? "/api/ollama/chat" : `${this.baseUrl}/api/chat`;
 
     const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: options?.model || 'llama3',
+        model: options?.model || "llama3",
         messages,
         stream: true,
       }),
@@ -469,7 +469,7 @@ export class OllamaProvider implements AIProvider {
 
     // Parse streaming response
     const reader = response.body?.getReader();
-    if (!reader) throw new Error('No response body');
+    if (!reader) throw new Error("No response body");
 
     const decoder = new TextDecoder();
     while (true) {
@@ -477,13 +477,13 @@ export class OllamaProvider implements AIProvider {
       if (done) break;
 
       const text = decoder.decode(value);
-      const lines = text.split('\n').filter(Boolean);
+      const lines = text.split("\n").filter(Boolean);
 
       for (const line of lines) {
         const data = JSON.parse(line);
         yield {
-          type: 'text',
-          content: data.message?.content || '',
+          type: "text",
+          content: data.message?.content || "",
         };
       }
     }
@@ -495,22 +495,22 @@ export class OllamaProvider implements AIProvider {
 
 ```typescript
 // apps/web/src/app/api/ollama/chat/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
 
   const response = await fetch(`${ollamaUrl}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
   if (body.stream) {
     // Forward streaming response
     return new NextResponse(response.body, {
-      headers: { 'Content-Type': 'application/x-ndjson' },
+      headers: { "Content-Type": "application/x-ndjson" },
     });
   }
 
@@ -536,38 +536,35 @@ Desktop can directly call local Ollama without proxy:
 
 ```typescript
 // apps/desktop/electron/preload.ts
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from "electron";
 
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld("electronAPI", {
   // Platform identifier
-  platform: 'desktop',
+  platform: "desktop",
 
   // Database path
-  getDbPath: () => ipcRenderer.invoke('db:getPath'),
+  getDbPath: () => ipcRenderer.invoke("db:getPath"),
 
   // Keychain operations
   keychain: {
-    get: (provider: string) => ipcRenderer.invoke('keychain:get', provider),
-    set: (provider: string, key: string) =>
-      ipcRenderer.invoke('keychain:set', provider, key),
-    delete: (provider: string) => ipcRenderer.invoke('keychain:delete', provider),
-    list: () => ipcRenderer.invoke('keychain:list'),
+    get: (provider: string) => ipcRenderer.invoke("keychain:get", provider),
+    set: (provider: string, key: string) => ipcRenderer.invoke("keychain:set", provider, key),
+    delete: (provider: string) => ipcRenderer.invoke("keychain:delete", provider),
+    list: () => ipcRenderer.invoke("keychain:list"),
   },
 
   // Filesystem (for knowledge base later)
   fs: {
-    readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
-    writeFile: (path: string, data: string) =>
-      ipcRenderer.invoke('fs:writeFile', path, data),
-    selectFile: (options: OpenDialogOptions) =>
-      ipcRenderer.invoke('fs:selectFile', options),
+    readFile: (path: string) => ipcRenderer.invoke("fs:readFile", path),
+    writeFile: (path: string, data: string) => ipcRenderer.invoke("fs:writeFile", path, data),
+    selectFile: (options: OpenDialogOptions) => ipcRenderer.invoke("fs:selectFile", options),
   },
 
   // Window control
   window: {
-    minimize: () => ipcRenderer.send('window:minimize'),
-    maximize: () => ipcRenderer.send('window:maximize'),
-    close: () => ipcRenderer.send('window:close'),
+    minimize: () => ipcRenderer.send("window:minimize"),
+    maximize: () => ipcRenderer.send("window:maximize"),
+    close: () => ipcRenderer.send("window:close"),
   },
 });
 ```
@@ -577,7 +574,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 ```typescript
 // packages/shared/src/types/electron.d.ts
 interface ElectronAPI {
-  platform: 'desktop';
+  platform: "desktop";
   getDbPath: () => Promise<string>;
   keychain: {
     get: (provider: string) => Promise<string | null>;
@@ -628,10 +625,10 @@ OLLAMA_URL=http://localhost:11434
 
 ## Summary
 
-| Module | Web | Desktop |
-|--------|-----|---------|
-| Database | PostgreSQL | SQLite |
-| API Key Storage | Encrypted in database | System Keychain |
-| Ollama | Server-side proxy | Direct connection |
-| Filesystem | Server-side handling | IPC to main process |
-| Rendering Layer | Next.js | Reuse Web |
+| Module          | Web                   | Desktop             |
+| --------------- | --------------------- | ------------------- |
+| Database        | PostgreSQL            | SQLite              |
+| API Key Storage | Encrypted in database | System Keychain     |
+| Ollama          | Server-side proxy     | Direct connection   |
+| Filesystem      | Server-side handling  | IPC to main process |
+| Rendering Layer | Next.js               | Reuse Web           |

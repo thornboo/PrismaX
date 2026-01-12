@@ -39,12 +39,13 @@ export default async function ConversationPage({ params, searchParams }: PagePro
   const { conversationId } = await params;
   const query = pickSearchQuery((await searchParams).q);
 
-  const { conversationList, metaByConversationId } =
-    await getConversationSidebarData(session.user.id, query);
+  const { conversationList, metaByConversationId } = await getConversationSidebarData(
+    session.user.id,
+    query,
+  );
 
   const conversation = await db.query.conversations.findFirst({
-    where: (table) =>
-      and(eq(table.id, conversationId), eq(table.userId, session.user.id)),
+    where: (table) => and(eq(table.id, conversationId), eq(table.userId, session.user.id)),
   });
 
   if (!conversation) {
@@ -90,17 +91,12 @@ export default async function ConversationPage({ params, searchParams }: PagePro
               <div className="truncate text-sm font-semibold text-zinc-200">
                 {conversation.title ?? "未命名会话"}
               </div>
-              <div className="mt-1 truncate text-xs text-zinc-500">
-                会话 ID：{conversation.id}
-              </div>
+              <div className="mt-1 truncate text-xs text-zinc-500">会话 ID：{conversation.id}</div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
               {providerList.length > 0 ? (
-                <form
-                  action={setConversationProviderAction}
-                  className="flex items-center gap-2"
-                >
+                <form action={setConversationProviderAction} className="flex items-center gap-2">
                   <input type="hidden" name="conversationId" value={conversationId} />
                   <select
                     name="providerId"

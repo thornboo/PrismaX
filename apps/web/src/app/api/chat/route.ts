@@ -25,19 +25,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "OPENAI_API_KEY_NOT_SET" }, { status: 400 });
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | {
-        id?: unknown;
-        conversationId?: unknown;
-        content?: unknown;
-        text?: unknown;
-        model?: unknown;
-        messages?: unknown;
-      }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    id?: unknown;
+    conversationId?: unknown;
+    content?: unknown;
+    text?: unknown;
+    model?: unknown;
+    messages?: unknown;
+  } | null;
 
-  const conversationId =
-    asNonEmptyString(body?.conversationId) ?? asNonEmptyString(body?.id);
+  const conversationId = asNonEmptyString(body?.conversationId) ?? asNonEmptyString(body?.id);
   const contentFromBody = asNonEmptyString(body?.content);
   const textFromBody = asNonEmptyString(body?.text);
 
@@ -63,10 +60,7 @@ export async function POST(request: Request) {
 
   const content = contentFromBody ?? textFromBody ?? contentFromMessages;
 
-  const modelId =
-    asNonEmptyString(body?.model) ??
-    process.env.OPENAI_MODEL ??
-    "gpt-4o-mini";
+  const modelId = asNonEmptyString(body?.model) ?? process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
   if (!conversationId || !content) {
     return NextResponse.json({ error: "BAD_REQUEST" }, { status: 400 });

@@ -160,6 +160,7 @@ PrismaX/
 ### apps/web
 
 Next.js Web application (priority implementation), includes:
+
 - Page routing
 - API routes
 - Server-side logic
@@ -168,6 +169,7 @@ Next.js Web application (priority implementation), includes:
 ### apps/desktop
 
 Electron desktop shell (later implementation), includes:
+
 - Main process logic
 - Window management
 - System integration
@@ -176,6 +178,7 @@ Electron desktop shell (later implementation), includes:
 ### packages/ui
 
 Shared UI component library, includes:
+
 - Common UI components
 - Business components
 - Custom hooks
@@ -184,6 +187,7 @@ Shared UI component library, includes:
 ### packages/core
 
 Core business logic, includes:
+
 - Chat logic
 - Knowledge base logic
 - Agent logic
@@ -192,6 +196,7 @@ Core business logic, includes:
 ### packages/database
 
 Database layer, includes:
+
 - Schema definitions
 - Database migrations
 - Query wrappers
@@ -199,6 +204,7 @@ Database layer, includes:
 ### packages/ai-sdk
 
 AI model wrapper, includes:
+
 - Model provider adapters
 - Streaming response handling
 - Unified interface
@@ -206,6 +212,7 @@ AI model wrapper, includes:
 ### packages/shared
 
 Shared utilities, includes:
+
 - Type definitions
 - Utility functions
 - Constants
@@ -218,8 +225,8 @@ Shared utilities, includes:
 
 ```yaml
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - "apps/*"
+  - "packages/*"
 ```
 
 ### turbo.json

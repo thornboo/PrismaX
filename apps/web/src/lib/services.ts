@@ -14,4 +14,3 @@ const aiProvider = new OpenAIProvider({
 });
 
 export const chatService = new ChatService(chatRepository, aiProvider, null);
-

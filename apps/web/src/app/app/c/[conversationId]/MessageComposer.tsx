@@ -62,4 +62,3 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
     </form>
   );
 }
-

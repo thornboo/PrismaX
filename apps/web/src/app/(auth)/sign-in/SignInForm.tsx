@@ -82,9 +82,7 @@ export function SignInForm({ callbackURL }: SignInFormProps) {
           />
         </label>
 
-        {errorMessage ? (
-          <p className="text-sm text-red-600">{errorMessage}</p>
-        ) : null}
+        {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
 
         <button
           type="submit"

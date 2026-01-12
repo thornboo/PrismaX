@@ -6,11 +6,11 @@
 
 ## Document Index
 
-| Document | Description |
-|----------|-------------|
-| [comparison.md](./comparison.md) | Electron vs Tauri comparison |
-| [details.md](./details.md) | Detailed tech stack for each layer |
-| [project-structure.md](./project-structure.md) | Monorepo project structure |
+| Document                                       | Description                        |
+| ---------------------------------------------- | ---------------------------------- |
+| [comparison.md](./comparison.md)               | Electron vs Tauri comparison       |
+| [details.md](./details.md)                     | Detailed tech stack for each layer |
+| [project-structure.md](./project-structure.md) | Monorepo project structure         |
 
 ---
 
@@ -18,17 +18,17 @@
 
 ### Confirmed Tech Stack
 
-| Category | Choice | Notes |
-|----------|--------|-------|
-| **Desktop Framework** | Electron | Mature ecosystem, consistent cross-platform UI |
-| **Web Framework** | Next.js 15 | App Router + RSC |
-| **UI Components** | shadcn/ui + Radix | Highly customizable |
-| **Styling** | Tailwind CSS | Atomic CSS |
-| **State Management** | Zustand | Lightweight |
-| **API Layer** | tRPC | End-to-end type safety |
-| **Database** | PostgreSQL + pgvector | Vector search |
-| **Local Database** | SQLite | Desktop version |
-| **Mobile** | React Native (later) | Code reuse |
+| Category              | Choice                | Notes                                          |
+| --------------------- | --------------------- | ---------------------------------------------- |
+| **Desktop Framework** | Electron              | Mature ecosystem, consistent cross-platform UI |
+| **Web Framework**     | Next.js 15            | App Router + RSC                               |
+| **UI Components**     | shadcn/ui + Radix     | Highly customizable                            |
+| **Styling**           | Tailwind CSS          | Atomic CSS                                     |
+| **State Management**  | Zustand               | Lightweight                                    |
+| **API Layer**         | tRPC                  | End-to-end type safety                         |
+| **Database**          | PostgreSQL + pgvector | Vector search                                  |
+| **Local Database**    | SQLite                | Desktop version                                |
+| **Mobile**            | React Native (later)  | Code reuse                                     |
 
 ### Decision Rationale
 

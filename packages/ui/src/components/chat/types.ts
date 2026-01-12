@@ -5,4 +5,3 @@ export type ChatMessage = {
   role: ChatRole;
   content: string;
 };
-

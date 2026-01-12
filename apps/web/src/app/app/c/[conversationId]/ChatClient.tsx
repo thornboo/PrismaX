@@ -28,8 +28,7 @@ function toTextParts(parts: Array<any>): string {
 
 function toChatMessages(messages: Array<any>): ChatMessage[] {
   return messages.map((m) => {
-    const role =
-      m?.role === "assistant" || m?.role === "system" ? m.role : "user";
+    const role = m?.role === "assistant" || m?.role === "system" ? m.role : "user";
     const content =
       typeof m?.content === "string"
         ? m.content
@@ -48,25 +47,14 @@ export function ChatClient({ conversationId, initialMessages }: ChatClientProps)
   const router = useRouter();
   const [input, setInput] = useState("");
 
-  const transport = useMemo(
-    () => new TextStreamChatTransport({ api: "/api/chat" }),
-    [],
-  );
+  const transport = useMemo(() => new TextStreamChatTransport({ api: "/api/chat" }), []);
 
-  const {
-    messages,
-    error,
-    sendMessage,
-    status,
-  } = useChat({
+  const { messages, error, sendMessage, status } = useChat({
     transport,
     id: conversationId,
     messages: initialMessages.map((m) => ({
       id: m.id,
-      role:
-        m.role === "assistant" || m.role === "system"
-          ? m.role
-          : ("user" as const),
+      role: m.role === "assistant" || m.role === "system" ? m.role : ("user" as const),
       parts: [{ type: "text", text: m.content }],
       createdAt: new Date(m.createdAt),
     })),

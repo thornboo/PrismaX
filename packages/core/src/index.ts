@@ -1,8 +1,4 @@
-export type {
-  AgentRunInput,
-  AgentRunResult,
-  IAgentRuntime,
-} from "./agent/types";
+export type { AgentRunInput, AgentRunResult, IAgentRuntime } from "./agent/types";
 
 export type {
   ArchivalMemorySearchResult,

@@ -112,9 +112,7 @@ export async function getConversationSidebarData(
     ]),
   );
 
-  const countById = Object.fromEntries(
-    counts.map((c) => [c.conversationId, c.messageCount]),
-  );
+  const countById = Object.fromEntries(counts.map((c) => [c.conversationId, c.messageCount]));
 
   const metaByConversationId: Record<string, ConversationMeta> = {};
 

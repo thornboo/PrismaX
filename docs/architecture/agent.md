@@ -77,7 +77,7 @@ class AgentRuntime {
         const plan = await this.planner.plan(context);
 
         // 4. Check if complete
-        if (plan.type === 'final_answer') {
+        if (plan.type === "final_answer") {
           return {
             success: true,
             answer: plan.content,
@@ -86,12 +86,12 @@ class AgentRuntime {
         }
 
         // 5. Execute tool call
-        if (plan.type === 'tool_call') {
+        if (plan.type === "tool_call") {
           const result = await this.executor.execute(plan.toolCall);
 
           // 6. Update state
           this.stateManager.addStep(sessionId, {
-            type: 'tool_call',
+            type: "tool_call",
             tool: plan.toolCall.name,
             input: plan.toolCall.arguments,
             output: result,
@@ -99,12 +99,12 @@ class AgentRuntime {
 
           // 7. Update context
           context.messages.push({
-            role: 'assistant',
+            role: "assistant",
             content: null,
             tool_calls: [plan.toolCall],
           });
           context.messages.push({
-            role: 'tool',
+            role: "tool",
             tool_call_id: plan.toolCall.id,
             content: result,
           });
@@ -114,7 +114,7 @@ class AgentRuntime {
       // Max iterations reached
       return {
         success: false,
-        error: 'Max iterations reached',
+        error: "Max iterations reached",
         steps: this.stateManager.getSteps(sessionId),
       };
     } finally {
@@ -140,24 +140,24 @@ class Planner {
     const systemPrompt = this.buildSystemPrompt(context.tools);
 
     // Call model
-    const response = await this.model.chat([
-      { role: 'system', content: systemPrompt },
-      ...context.messages,
-    ], {
-      tools: context.tools.map(this.formatTool),
-      tool_choice: 'auto',
-    });
+    const response = await this.model.chat(
+      [{ role: "system", content: systemPrompt }, ...context.messages],
+      {
+        tools: context.tools.map(this.formatTool),
+        tool_choice: "auto",
+      },
+    );
 
     // Parse response
     if (response.tool_calls?.length) {
       return {
-        type: 'tool_call',
+        type: "tool_call",
         toolCall: response.tool_calls[0],
       };
     }
 
     return {
-      type: 'final_answer',
+      type: "final_answer",
       content: response.content,
     };
   }
@@ -165,7 +165,7 @@ class Planner {
   private buildSystemPrompt(tools: Tool[]): string {
     return `You are a helpful AI assistant with access to the following tools:
 
-${tools.map((t) => `- ${t.name}: ${t.description}`).join('\n')}
+${tools.map((t) => `- ${t.name}: ${t.description}`).join("\n")}
 
 When you need to use a tool, call it with the appropriate parameters.
 When you have enough information to answer the user's question, provide a final answer.
@@ -174,7 +174,7 @@ Think step by step and explain your reasoning.`;
 
   private formatTool(tool: Tool): OpenAITool {
     return {
-      type: 'function',
+      type: "function",
       function: {
         name: tool.name,
         description: tool.description,
@@ -219,10 +219,10 @@ class ToolExecutor {
         this.createTimeout(tool.timeout || this.timeout),
       ]);
 
-      return typeof result === 'string' ? result : JSON.stringify(result);
+      return typeof result === "string" ? result : JSON.stringify(result);
     } catch (error) {
       return JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -244,7 +244,7 @@ class ToolExecutor {
 
   private createTimeout(ms: number): Promise<never> {
     return new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Tool execution timeout')), ms);
+      setTimeout(() => reject(new Error("Tool execution timeout")), ms);
     });
   }
 }
@@ -269,7 +269,7 @@ class StateManager {
       id: sessionId,
       steps: [],
       startTime: Date.now(),
-      status: 'running',
+      status: "running",
     };
 
     this.sessions.set(sessionId, session);
@@ -293,7 +293,7 @@ class StateManager {
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
-    session.status = 'completed';
+    session.status = "completed";
     session.endTime = Date.now();
     this.persistSession(session);
   }
@@ -303,8 +303,8 @@ class StateManager {
       await this.redis.set(
         `agent:session:${session.id}`,
         JSON.stringify(session),
-        'EX',
-        3600 // 1 hour expiry
+        "EX",
+        3600, // 1 hour expiry
       );
     }
   }
@@ -348,22 +348,22 @@ interface Tool {
 
 ```typescript
 const webSearchTool: Tool = {
-  name: 'web_search',
-  description: 'Search the web for current information',
+  name: "web_search",
+  description: "Search the web for current information",
   parameters: {
-    type: 'object',
+    type: "object",
     properties: {
       query: {
-        type: 'string',
-        description: 'The search query',
+        type: "string",
+        description: "The search query",
       },
       maxResults: {
-        type: 'number',
-        description: 'Maximum number of results',
+        type: "number",
+        description: "Maximum number of results",
         default: 5,
       },
     },
-    required: ['query'],
+    required: ["query"],
   },
   async execute({ query, maxResults = 5 }) {
     const results = await searchEngine.search(query, maxResults);
@@ -380,17 +380,17 @@ const webSearchTool: Tool = {
 
 ```typescript
 const urlFetchTool: Tool = {
-  name: 'url_fetch',
-  description: 'Fetch and parse content from a URL',
+  name: "url_fetch",
+  description: "Fetch and parse content from a URL",
   parameters: {
-    type: 'object',
+    type: "object",
     properties: {
       url: {
-        type: 'string',
-        description: 'The URL to fetch',
+        type: "string",
+        description: "The URL to fetch",
       },
     },
-    required: ['url'],
+    required: ["url"],
   },
   async execute({ url }) {
     const response = await fetch(url);
@@ -405,17 +405,17 @@ const urlFetchTool: Tool = {
 
 ```typescript
 const codeInterpreterTool: Tool = {
-  name: 'code_interpreter',
-  description: 'Execute Python code in a sandboxed environment',
+  name: "code_interpreter",
+  description: "Execute Python code in a sandboxed environment",
   parameters: {
-    type: 'object',
+    type: "object",
     properties: {
       code: {
-        type: 'string',
-        description: 'Python code to execute',
+        type: "string",
+        description: "Python code to execute",
       },
     },
-    required: ['code'],
+    required: ["code"],
   },
   requireConfirmation: true,
   timeout: 60000,
@@ -434,21 +434,21 @@ const codeInterpreterTool: Tool = {
 
 ```typescript
 const fileReadTool: Tool = {
-  name: 'file_read',
-  description: 'Read content from a file',
+  name: "file_read",
+  description: "Read content from a file",
   parameters: {
-    type: 'object',
+    type: "object",
     properties: {
       path: {
-        type: 'string',
-        description: 'File path to read',
+        type: "string",
+        description: "File path to read",
       },
     },
-    required: ['path'],
+    required: ["path"],
   },
-  permissions: ['file:read'],
+  permissions: ["file:read"],
   async execute({ path }) {
-    const content = await fs.readFile(path, 'utf-8');
+    const content = await fs.readFile(path, "utf-8");
     return { path, content };
   },
 };
@@ -471,14 +471,14 @@ class MCPClient {
     this.transport = await createTransport(serverConfig);
 
     // Get tool list
-    const response = await this.transport.request('tools/list', {});
+    const response = await this.transport.request("tools/list", {});
     for (const tool of response.tools) {
       this.tools.set(tool.name, tool);
     }
   }
 
   async callTool(name: string, args: unknown): Promise<unknown> {
-    const response = await this.transport.request('tools/call', {
+    const response = await this.transport.request("tools/call", {
       name,
       arguments: args,
     });
@@ -513,7 +513,7 @@ class MCPServer {
 
   async handleRequest(request: MCPRequest): Promise<MCPResponse> {
     switch (request.method) {
-      case 'tools/list':
+      case "tools/list":
         return {
           tools: Array.from(this.tools.values()).map((t) => ({
             name: t.name,
@@ -522,13 +522,13 @@ class MCPServer {
           })),
         };
 
-      case 'tools/call':
+      case "tools/call":
         const tool = this.tools.get(request.params.name);
         if (!tool) {
           throw new Error(`Tool ${request.params.name} not found`);
         }
         const result = await tool.execute(request.params.arguments);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
 
       default:
         throw new Error(`Unknown method: ${request.method}`);
@@ -554,7 +554,7 @@ interface IMemoryProvider {
   // Archival Memory (Cold Storage) - Past Conversations & Facts
   searchArchivalMemory(query: string, limit?: number): Promise<MemoryResult[]>;
   addArchivalMemory(content: string): Promise<void>;
-  
+
   // Recall context for current turn
   retrieveContext(message: Message): Promise<ContextData>;
 }
@@ -562,20 +562,20 @@ interface IMemoryProvider {
 
 ### 1. Native Memory Engine (Default / Offline)
 
-*   **Target**: Desktop users, Offline mode, Standard Web users.
-*   **Implementation**:
-    *   **Core Memory**: Stored in `assistants` table (extended fields) or dedicated `memories` table. Injected into System Prompt.
-    *   **Archival Memory**: Uses the standard Vector Store (SQLite-VSS / PGVector) to store conversation summaries and extracted facts.
-*   **Mechanism**: A lightweight background process analyzes conversation turns to extract facts and update the Vector Store.
+- **Target**: Desktop users, Offline mode, Standard Web users.
+- **Implementation**:
+  - **Core Memory**: Stored in `assistants` table (extended fields) or dedicated `memories` table. Injected into System Prompt.
+  - **Archival Memory**: Uses the standard Vector Store (SQLite-VSS / PGVector) to store conversation summaries and extracted facts.
+- **Mechanism**: A lightweight background process analyzes conversation turns to extract facts and update the Vector Store.
 
 ### 2. Letta Remote Engine (Advanced / Plugin)
 
-*   **Target**: Power users, Letta Cloud subscribers, Self-hosted Docker users.
-*   **Implementation**: Acts as a proxy client to a Letta (formerly MemGPT) server.
-*   **Mechanism**:
-    *   Connects via HTTP API.
-    *   Delegates state management to the Letta Server.
-    *   Syncs "Core Memory" blocks to UI for visualization.
+- **Target**: Power users, Letta Cloud subscribers, Self-hosted Docker users.
+- **Implementation**: Acts as a proxy client to a Letta (formerly MemGPT) server.
+- **Mechanism**:
+  - Connects via HTTP API.
+  - Delegates state management to the Letta Server.
+  - Syncs "Core Memory" blocks to UI for visualization.
 
 ---
 
@@ -660,13 +660,13 @@ class PlanExecuteAgent extends AgentRuntime {
 
 ### Error Types
 
-| Error Type | Description | Handling |
-|------------|-------------|----------|
-| ToolNotFound | Tool doesn't exist | Return error message to model |
-| ToolExecutionError | Tool execution failed | Retry or return error |
-| ToolTimeout | Tool execution timeout | Terminate execution, return timeout error |
-| MaxIterationsReached | Max iterations reached | Return partial results |
-| PermissionDenied | Insufficient permissions | Request user authorization |
+| Error Type           | Description              | Handling                                  |
+| -------------------- | ------------------------ | ----------------------------------------- |
+| ToolNotFound         | Tool doesn't exist       | Return error message to model             |
+| ToolExecutionError   | Tool execution failed    | Retry or return error                     |
+| ToolTimeout          | Tool execution timeout   | Terminate execution, return timeout error |
+| MaxIterationsReached | Max iterations reached   | Return partial results                    |
+| PermissionDenied     | Insufficient permissions | Request user authorization                |
 
 ### Retry Strategy
 
@@ -700,9 +700,9 @@ class RetryExecutor {
   private isRetryable(error: unknown): boolean {
     if (error instanceof Error) {
       return (
-        error.message.includes('timeout') ||
-        error.message.includes('rate limit') ||
-        error.message.includes('network')
+        error.message.includes("timeout") ||
+        error.message.includes("rate limit") ||
+        error.message.includes("network")
       );
     }
     return false;
@@ -718,10 +718,7 @@ class RetryExecutor {
 
 ```typescript
 // Permission check
-async function checkToolPermission(
-  tool: Tool,
-  user: User
-): Promise<boolean> {
+async function checkToolPermission(tool: Tool, user: User): Promise<boolean> {
   if (!tool.permissions?.length) {
     return true;
   }

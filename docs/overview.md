@@ -57,17 +57,17 @@ Build a feature-rich, flexibly deployable AI chat assistant application that sup
 
 ## Tech Stack
 
-| Category | Technology | Description |
-|----------|------------|-------------|
-| Frontend Framework | Next.js 15 + React 19 | App Router + Server Components |
-| UI Components | shadcn/ui + Radix UI | Highly customizable, no style lock-in |
-| Styling | Tailwind CSS | Atomic CSS |
-| State Management | Zustand | Lightweight, TypeScript friendly |
-| Desktop Framework | Electron | Cross-platform desktop apps |
-| Backend | Next.js API Routes + tRPC | End-to-end type safety |
-| Database | PostgreSQL + pgvector | Vector search support |
-| Local Database | SQLite | Lightweight storage for desktop |
-| Cache | Redis | Agent state management |
+| Category           | Technology                | Description                           |
+| ------------------ | ------------------------- | ------------------------------------- |
+| Frontend Framework | Next.js 15 + React 19     | App Router + Server Components        |
+| UI Components      | shadcn/ui + Radix UI      | Highly customizable, no style lock-in |
+| Styling            | Tailwind CSS              | Atomic CSS                            |
+| State Management   | Zustand                   | Lightweight, TypeScript friendly      |
+| Desktop Framework  | Electron                  | Cross-platform desktop apps           |
+| Backend            | Next.js API Routes + tRPC | End-to-end type safety                |
+| Database           | PostgreSQL + pgvector     | Vector search support                 |
+| Local Database     | SQLite                    | Lightweight storage for desktop       |
+| Cache              | Redis                     | Agent state management                |
 
 For detailed tech stack analysis, see the [tech-stack](./tech-stack/) directory.
 
@@ -75,33 +75,33 @@ For detailed tech stack analysis, see the [tech-stack](./tech-stack/) directory.
 
 ## Documentation Index
 
-| Directory | Description |
-|-----------|-------------|
-| [tech-stack](./tech-stack/) | Technology comparison and decisions |
-| [architecture](./architecture/) | System architecture and database design |
-| [features](./features/) | Feature list and priorities |
-| [guides](./guides/) | Development environment and code standards |
+| Directory                       | Description                                |
+| ------------------------------- | ------------------------------------------ |
+| [tech-stack](./tech-stack/)     | Technology comparison and decisions        |
+| [architecture](./architecture/) | System architecture and database design    |
+| [features](./features/)         | Feature list and priorities                |
+| [guides](./guides/)             | Development environment and code standards |
 
 ---
 
 ## Project Status
 
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Requirements Analysis | Completed | Feature planning finalized |
-| Tech Stack Selection | Completed | Electron + Next.js |
-| Architecture Design | In Progress | Detailed design ongoing |
-| Development | Pending | - |
-| Testing & Deployment | Pending | - |
+| Phase                 | Status      | Notes                      |
+| --------------------- | ----------- | -------------------------- |
+| Requirements Analysis | Completed   | Feature planning finalized |
+| Tech Stack Selection  | Completed   | Electron + Next.js         |
+| Architecture Design   | In Progress | Detailed design ongoing    |
+| Development           | Pending     | -                          |
+| Testing & Deployment  | Pending     | -                          |
 
 ---
 
 ## Confirmed Decisions
 
-| # | Decision | Conclusion | Notes |
-|---|----------|------------|-------|
-| 1 | Desktop Framework | Electron | Mature ecosystem, UI consistency |
-| 2 | UI Component Library | shadcn/ui | Highly customizable |
-| 3 | Mobile Support | Required (later) | React Native |
-| 4 | Local Models | Ollama integration | P0 feature |
-| 5 | Cloud Sync | Required | Cross-device data sync |
+| #   | Decision             | Conclusion         | Notes                            |
+| --- | -------------------- | ------------------ | -------------------------------- |
+| 1   | Desktop Framework    | Electron           | Mature ecosystem, UI consistency |
+| 2   | UI Component Library | shadcn/ui          | Highly customizable              |
+| 3   | Mobile Support       | Required (later)   | React Native                     |
+| 4   | Local Models         | Ollama integration | P0 feature                       |
+| 5   | Cloud Sync           | Required           | Cross-device data sync           |

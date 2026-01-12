@@ -8,12 +8,12 @@
 
 PrismaX supports multiple deployment methods:
 
-| Deployment Method | Use Case | Complexity |
-|-------------------|----------|------------|
-| Docker Compose | Personal/small team self-hosting | Low |
-| Kubernetes | Enterprise production environment | High |
-| Vercel + Cloud Services | Quick deployment | Low |
-| Desktop App Distribution | End users | Medium |
+| Deployment Method        | Use Case                          | Complexity |
+| ------------------------ | --------------------------------- | ---------- |
+| Docker Compose           | Personal/small team self-hosting  | Low        |
+| Kubernetes               | Enterprise production environment | High       |
+| Vercel + Cloud Services  | Quick deployment                  | Low        |
+| Desktop App Distribution | End users                         | Medium     |
 
 ---
 
@@ -38,7 +38,7 @@ deploy/
 #### docker-compose.yml
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -46,7 +46,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '3000:3000'
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/prismax
@@ -58,7 +58,7 @@ services:
         condition: service_started
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -72,7 +72,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=prismax
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -88,8 +88,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - '80:80'
-      - '443:443'
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
@@ -289,8 +289,8 @@ metadata:
   name: prismax-config
   namespace: prismax
 data:
-  NODE_ENV: 'production'
-  NEXT_PUBLIC_APP_URL: 'https://app.prismax.com'
+  NODE_ENV: "production"
+  NEXT_PUBLIC_APP_URL: "https://app.prismax.com"
 ```
 
 #### secret.yaml
@@ -303,10 +303,10 @@ metadata:
   namespace: prismax
 type: Opaque
 stringData:
-  DATABASE_URL: 'postgresql://user:password@postgres:5432/prismax'
-  REDIS_URL: 'redis://redis:6379'
-  JWT_SECRET: 'your-jwt-secret'
-  ENCRYPTION_KEY: 'your-encryption-key'
+  DATABASE_URL: "postgresql://user:password@postgres:5432/prismax"
+  REDIS_URL: "redis://redis:6379"
+  JWT_SECRET: "your-jwt-secret"
+  ENCRYPTION_KEY: "your-encryption-key"
 ```
 
 #### deployment.yaml
@@ -339,11 +339,11 @@ spec:
                 name: prismax-secrets
           resources:
             requests:
-              memory: '256Mi'
-              cpu: '250m'
+              memory: "256Mi"
+              cpu: "250m"
             limits:
-              memory: '512Mi'
-              cpu: '500m'
+              memory: "512Mi"
+              cpu: "500m"
           livenessProbe:
             httpGet:
               path: /api/health
@@ -388,7 +388,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   tls:
     - hosts:
@@ -490,12 +490,12 @@ vercel --prod
 
 ### External Service Configuration
 
-| Service | Recommended Solution |
-|---------|---------------------|
-| PostgreSQL | Supabase / Neon / PlanetScale |
-| Redis | Upstash / Redis Cloud |
-| File Storage | Vercel Blob / AWS S3 |
-| Vector Database | Pinecone / Supabase pgvector |
+| Service         | Recommended Solution          |
+| --------------- | ----------------------------- |
+| PostgreSQL      | Supabase / Neon / PlanetScale |
+| Redis           | Upstash / Redis Cloud         |
+| File Storage    | Vercel Blob / AWS S3          |
+| Vector Database | Pinecone / Supabase pgvector  |
 
 ---
 
@@ -505,41 +505,41 @@ vercel --prod
 
 ```typescript
 // electron-builder.config.ts
-import { Configuration } from 'electron-builder';
+import { Configuration } from "electron-builder";
 
 const config: Configuration = {
-  appId: 'com.prismax.app',
-  productName: 'PrismaX',
+  appId: "com.prismax.app",
+  productName: "PrismaX",
   directories: {
-    output: 'release',
+    output: "release",
   },
-  files: ['dist/**/*', 'package.json'],
+  files: ["dist/**/*", "package.json"],
   mac: {
-    category: 'public.app-category.productivity',
+    category: "public.app-category.productivity",
     target: [
-      { target: 'dmg', arch: ['x64', 'arm64'] },
-      { target: 'zip', arch: ['x64', 'arm64'] },
+      { target: "dmg", arch: ["x64", "arm64"] },
+      { target: "zip", arch: ["x64", "arm64"] },
     ],
     hardenedRuntime: true,
     gatekeeperAssess: false,
-    entitlements: 'build/entitlements.mac.plist',
-    entitlementsInherit: 'build/entitlements.mac.plist',
+    entitlements: "build/entitlements.mac.plist",
+    entitlementsInherit: "build/entitlements.mac.plist",
   },
   win: {
     target: [
-      { target: 'nsis', arch: ['x64'] },
-      { target: 'portable', arch: ['x64'] },
+      { target: "nsis", arch: ["x64"] },
+      { target: "portable", arch: ["x64"] },
     ],
     certificateFile: process.env.WIN_CERT_FILE,
     certificatePassword: process.env.WIN_CERT_PASSWORD,
   },
   linux: {
     target: [
-      { target: 'AppImage', arch: ['x64'] },
-      { target: 'deb', arch: ['x64'] },
-      { target: 'rpm', arch: ['x64'] },
+      { target: "AppImage", arch: ["x64"] },
+      { target: "deb", arch: ["x64"] },
+      { target: "rpm", arch: ["x64"] },
     ],
-    category: 'Utility',
+    category: "Utility",
   },
   nsis: {
     oneClick: false,
@@ -548,10 +548,10 @@ const config: Configuration = {
     createStartMenuShortcut: true,
   },
   publish: {
-    provider: 'github',
-    owner: 'your-username',
-    repo: 'PrismaX',
-    releaseType: 'release',
+    provider: "github",
+    owner: "your-username",
+    repo: "PrismaX",
+    releaseType: "release",
   },
 };
 
@@ -562,20 +562,20 @@ export default config;
 
 ```typescript
 // desktop/updater.ts
-import { autoUpdater } from 'electron-updater';
-import { app, dialog } from 'electron';
+import { autoUpdater } from "electron-updater";
+import { app, dialog } from "electron";
 
 export function initAutoUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on("update-available", (info) => {
     dialog
       .showMessageBox({
-        type: 'info',
-        title: 'Update Available',
+        type: "info",
+        title: "Update Available",
         message: `Version ${info.version} is available. Download now?`,
-        buttons: ['Download', 'Later'],
+        buttons: ["Download", "Later"],
       })
       .then((result) => {
         if (result.response === 0) {
@@ -584,13 +584,13 @@ export function initAutoUpdater() {
       });
   });
 
-  autoUpdater.on('update-downloaded', () => {
+  autoUpdater.on("update-downloaded", () => {
     dialog
       .showMessageBox({
-        type: 'info',
-        title: 'Update Downloaded',
-        message: 'Update downloaded. Restart to install?',
-        buttons: ['Restart Now', 'Later'],
+        type: "info",
+        title: "Update Downloaded",
+        message: "Update downloaded. Restart to install?",
+        buttons: ["Restart Now", "Later"],
       })
       .then((result) => {
         if (result.response === 0) {
@@ -629,21 +629,21 @@ pnpm release:desktop
 
 ### Required Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `REDIS_URL` | Redis connection string | `redis://host:6379` |
-| `JWT_SECRET` | JWT signing key | Random 32-byte string |
-| `ENCRYPTION_KEY` | Data encryption key | Random 32-byte string |
+| Variable         | Description                  | Example                               |
+| ---------------- | ---------------------------- | ------------------------------------- |
+| `DATABASE_URL`   | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
+| `REDIS_URL`      | Redis connection string      | `redis://host:6379`                   |
+| `JWT_SECRET`     | JWT signing key              | Random 32-byte string                 |
+| `ENCRYPTION_KEY` | Data encryption key          | Random 32-byte string                 |
 
 ### Optional Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Service port | `3000` |
-| `NODE_ENV` | Runtime environment | `development` |
-| `LOG_LEVEL` | Log level | `info` |
-| `CORS_ORIGINS` | CORS allowed origins | `*` |
+| Variable       | Description          | Default       |
+| -------------- | -------------------- | ------------- |
+| `PORT`         | Service port         | `3000`        |
+| `NODE_ENV`     | Runtime environment  | `development` |
+| `LOG_LEVEL`    | Log level            | `info`        |
+| `CORS_ORIGINS` | CORS allowed origins | `*`           |
 
 ### Generate Keys
 
@@ -665,7 +665,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 // pages/api/health.ts
 export default function handler(req, res) {
   const health = {
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
@@ -679,21 +679,21 @@ export default function handler(req, res) {
 
 ```typescript
 // metrics.ts
-import { Registry, Counter, Histogram } from 'prom-client';
+import { Registry, Counter, Histogram } from "prom-client";
 
 const register = new Registry();
 
 export const httpRequestsTotal = new Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'path', 'status'],
+  name: "http_requests_total",
+  help: "Total number of HTTP requests",
+  labelNames: ["method", "path", "status"],
   registers: [register],
 });
 
 export const httpRequestDuration = new Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'HTTP request duration in seconds',
-  labelNames: ['method', 'path'],
+  name: "http_request_duration_seconds",
+  help: "HTTP request duration in seconds",
+  labelNames: ["method", "path"],
   buckets: [0.1, 0.5, 1, 2, 5],
   registers: [register],
 });
@@ -752,12 +752,12 @@ gunzip -c $BACKUP_FILE | docker-compose exec -T db psql -U postgres prismax
 
 ### Common Issues
 
-| Issue | Possible Cause | Solution |
-|-------|----------------|----------|
-| Database connection failed | Network/credential issue | Check DATABASE_URL and network connectivity |
-| Out of memory | Memory limit too low | Increase container memory limit |
-| Response timeout | AI API latency | Increase timeout, add retry mechanism |
-| SSL certificate error | Certificate expired/misconfigured | Update certificate, check Nginx config |
+| Issue                      | Possible Cause                    | Solution                                    |
+| -------------------------- | --------------------------------- | ------------------------------------------- |
+| Database connection failed | Network/credential issue          | Check DATABASE_URL and network connectivity |
+| Out of memory              | Memory limit too low              | Increase container memory limit             |
+| Response timeout           | AI API latency                    | Increase timeout, add retry mechanism       |
+| SSL certificate error      | Certificate expired/misconfigured | Update certificate, check Nginx config      |
 
 ### View Logs
 

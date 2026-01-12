@@ -48,9 +48,7 @@ export default async function AppHomePage({ searchParams }: PageProps) {
       <div className="flex h-full flex-col">
         <header className="border-b border-white/10 bg-zinc-950/60 px-6 py-4 backdrop-blur">
           <div className="text-sm font-medium text-zinc-200">开始对话</div>
-          <div className="mt-1 text-xs text-zinc-500">
-            从左侧选择会话，或创建一个新的会话。
-          </div>
+          <div className="mt-1 text-xs text-zinc-500">从左侧选择会话，或创建一个新的会话。</div>
         </header>
 
         <div className="flex flex-1 items-center justify-center p-6">

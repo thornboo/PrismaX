@@ -50,13 +50,12 @@ export function registerIpc(options: { userDataPath: string }) {
   const chatRepository = new DesktopChatRepository(db);
   const memoryRepository = new NativeMemoryRepository(db);
 
-  const aiProvider =
-    process.env.OPENAI_API_KEY
-      ? new OpenAIProvider({
-          apiKey: process.env.OPENAI_API_KEY,
-          baseURL: process.env.OPENAI_BASE_URL,
-        })
-      : createFallbackProvider();
+  const aiProvider = process.env.OPENAI_API_KEY
+    ? new OpenAIProvider({
+        apiKey: process.env.OPENAI_API_KEY,
+        baseURL: process.env.OPENAI_BASE_URL,
+      })
+    : createFallbackProvider();
 
   const chatService = new ChatService(chatRepository, aiProvider, memoryRepository);
 
@@ -82,7 +81,11 @@ export function registerIpc(options: { userDataPath: string }) {
     return {
       insertedFolderId: folderId,
       folderCount: folders.length,
-      folders: folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
+      folders: folders.map((f) => ({
+        id: f.id,
+        name: f.name,
+        createdAt: f.createdAt.toISOString(),
+      })),
     };
   });
 
@@ -112,22 +115,18 @@ export function registerIpc(options: { userDataPath: string }) {
 
   ipcMain.handle(
     "chat:send",
-    async (
-      event,
-      input: { conversationId?: unknown; content?: unknown; modelId?: unknown },
-    ) => {
+    async (event, input: { conversationId?: unknown; content?: unknown; modelId?: unknown }) => {
       const conversationId =
         typeof input?.conversationId === "string" && input.conversationId.trim().length > 0
           ? input.conversationId.trim()
           : DEFAULT_CONVERSATION_ID;
 
-      const content =
-        typeof input?.content === "string" ? input.content.trim() : "";
+      const content = typeof input?.content === "string" ? input.content.trim() : "";
 
       const modelId =
         typeof input?.modelId === "string" && input.modelId.trim().length > 0
           ? input.modelId.trim()
-          : process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+          : (process.env.OPENAI_MODEL ?? "gpt-4o-mini");
 
       if (!content) {
         return { requestId: randomUUID(), error: "EMPTY_CONTENT" };

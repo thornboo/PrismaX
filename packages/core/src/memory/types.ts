@@ -16,10 +16,7 @@ export type ArchivalMemorySearchResult = {
 };
 
 export interface IMemoryProvider {
-  getCoreMemory(input: {
-    assistantId: string;
-    label: CoreMemoryLabel;
-  }): Promise<CoreMemory | null>;
+  getCoreMemory(input: { assistantId: string; label: CoreMemoryLabel }): Promise<CoreMemory | null>;
 
   updateCoreMemory(input: {
     assistantId: string;
@@ -33,4 +30,3 @@ export interface IMemoryProvider {
     limit?: number;
   }): Promise<ArchivalMemorySearchResult[]>;
 }
-

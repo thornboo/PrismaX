@@ -6,10 +6,10 @@
 
 ## Document Index
 
-| Document | Description |
-|----------|-------------|
-| [feature-list.md](./feature-list.md) | Complete feature list with priorities |
-| [ui-design.md](./ui-design.md) | Interface layout and interaction design |
+| Document                             | Description                             |
+| ------------------------------------ | --------------------------------------- |
+| [feature-list.md](./feature-list.md) | Complete feature list with priorities   |
+| [ui-design.md](./ui-design.md)       | Interface layout and interaction design |
 
 ---
 

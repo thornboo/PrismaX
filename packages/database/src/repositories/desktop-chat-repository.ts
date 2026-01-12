@@ -117,7 +117,10 @@ export class DesktopChatRepository implements IChatRepository {
     };
   }
 
-  async getConversations(input?: { userId?: string; folderId?: string | null }): Promise<Conversation[]> {
+  async getConversations(input?: {
+    userId?: string;
+    folderId?: string | null;
+  }): Promise<Conversation[]> {
     const folderId = input?.folderId;
     const where =
       folderId === undefined

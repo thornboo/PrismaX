@@ -15,4 +15,3 @@ export function AppShell({ sidebar, children }: AppShellProps) {
     </div>
   );
 }
-

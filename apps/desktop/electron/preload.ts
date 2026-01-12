@@ -13,7 +13,13 @@ contextBridge.exposeInMainWorld("electron", {
       }>,
     send: (input: { conversationId: string; content: string; modelId?: string }) =>
       ipcRenderer.invoke("chat:send", input) as Promise<{ requestId: string; error?: string }>,
-    onMeta: (callback: (payload: { requestId: string; userMessageId: string; assistantMessageId: string }) => void) => {
+    onMeta: (
+      callback: (payload: {
+        requestId: string;
+        userMessageId: string;
+        assistantMessageId: string;
+      }) => void,
+    ) => {
       const listener = (_event: unknown, payload: any) => callback(payload);
       ipcRenderer.on("chat:meta", listener);
       return () => ipcRenderer.removeListener("chat:meta", listener);

@@ -8,20 +8,20 @@
 
 ### Main Branches
 
-| Branch | Description | Protection Rules |
-|--------|-------------|------------------|
-| `main` | Main branch, production code | No direct push, requires PR |
+| Branch    | Description                         | Protection Rules            |
+| --------- | ----------------------------------- | --------------------------- |
+| `main`    | Main branch, production code        | No direct push, requires PR |
 | `develop` | Development branch, latest dev code | No direct push, requires PR |
 
 ### Feature Branches
 
-| Branch Type | Naming Convention | Example |
-|-------------|-------------------|---------|
-| Feature development | `feature/<description>` | `feature/add-knowledge-base` |
-| Bug fix | `fix/<description>` | `fix/message-render-error` |
-| Hotfix | `hotfix/<description>` | `hotfix/critical-security-fix` |
-| Refactor | `refactor/<description>` | `refactor/chat-store` |
-| Documentation | `docs/<description>` | `docs/api-documentation` |
+| Branch Type         | Naming Convention        | Example                        |
+| ------------------- | ------------------------ | ------------------------------ |
+| Feature development | `feature/<description>`  | `feature/add-knowledge-base`   |
+| Bug fix             | `fix/<description>`      | `fix/message-render-error`     |
+| Hotfix              | `hotfix/<description>`   | `hotfix/critical-security-fix` |
+| Refactor            | `refactor/<description>` | `refactor/chat-store`          |
+| Documentation       | `docs/<description>`     | `docs/api-documentation`       |
 
 ---
 
@@ -39,29 +39,29 @@
 
 ### Type Categories
 
-| Type | Description |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation update |
-| `style` | Code formatting (no functional changes) |
+| Type       | Description                                |
+| ---------- | ------------------------------------------ |
+| `feat`     | New feature                                |
+| `fix`      | Bug fix                                    |
+| `docs`     | Documentation update                       |
+| `style`    | Code formatting (no functional changes)    |
 | `refactor` | Refactoring (not a new feature or bug fix) |
-| `perf` | Performance optimization |
-| `test` | Test related |
-| `chore` | Build/tooling related |
-| `ci` | CI/CD related |
+| `perf`     | Performance optimization                   |
+| `test`     | Test related                               |
+| `chore`    | Build/tooling related                      |
+| `ci`       | CI/CD related                              |
 
 ### Scope Categories
 
-| Scope | Description |
-|-------|-------------|
-| `web` | Web application |
-| `desktop` | Desktop application |
-| `ui` | UI component library |
-| `core` | Core logic |
-| `ai-sdk` | AI SDK |
-| `database` | Database |
-| `shared` | Shared utilities |
+| Scope      | Description          |
+| ---------- | -------------------- |
+| `web`      | Web application      |
+| `desktop`  | Desktop application  |
+| `ui`       | UI component library |
+| `core`     | Core logic           |
+| `ai-sdk`   | AI SDK               |
+| `database` | Database             |
+| `shared`   | Shared utilities     |
 
 ### Examples
 

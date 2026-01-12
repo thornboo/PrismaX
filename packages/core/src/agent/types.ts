@@ -13,4 +13,3 @@ export interface IAgentRuntime {
   run(input: AgentRunInput): Promise<AgentRunResult>;
   dispose?(): Promise<void> | void;
 }
-

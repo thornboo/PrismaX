@@ -158,7 +158,9 @@ export class WebChatRepository implements IChatRepository {
       })
       .from(messages)
       .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-      .where(and(eq(conversations.userId, userId), eq(messages.conversationId, input.conversationId)))
+      .where(
+        and(eq(conversations.userId, userId), eq(messages.conversationId, input.conversationId)),
+      )
       .orderBy(asc(messages.createdAt));
 
     return rows.map((row: any) => ({

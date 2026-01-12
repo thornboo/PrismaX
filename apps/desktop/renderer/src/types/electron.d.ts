@@ -20,10 +20,18 @@ declare global {
           requestId: string;
           error?: string;
         }>;
-        onMeta: (callback: (payload: { requestId: string; userMessageId: string; assistantMessageId: string }) => void) => () => void;
+        onMeta: (
+          callback: (payload: {
+            requestId: string;
+            userMessageId: string;
+            assistantMessageId: string;
+          }) => void,
+        ) => () => void;
         onToken: (callback: (payload: { requestId: string; token: string }) => void) => () => void;
         onDone: (callback: (payload: { requestId: string }) => void) => () => void;
-        onError: (callback: (payload: { requestId: string; message: string }) => void) => () => void;
+        onError: (
+          callback: (payload: { requestId: string; message: string }) => void,
+        ) => () => void;
       };
     };
   }

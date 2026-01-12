@@ -27,4 +27,3 @@ export default function AppTemplate({ children }: AppTemplateProps) {
     </AnimatePresence>
   );
 }
-

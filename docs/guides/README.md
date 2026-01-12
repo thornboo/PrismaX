@@ -6,13 +6,13 @@
 
 ## Document Index
 
-| Document | Description |
-|----------|-------------|
+| Document                                                   | Description                         |
+| ---------------------------------------------------------- | ----------------------------------- |
 | [development-environment.md](./development-environment.md) | Development environment setup guide |
-| [code-standards.md](./code-standards.md) | Code style and standards |
-| [git-workflow.md](./git-workflow.md) | Git workflow and commit conventions |
-| [testing.md](./testing.md) | Testing strategy and standards |
-| [deployment.md](./deployment.md) | Deployment solutions and processes |
+| [code-standards.md](./code-standards.md)                   | Code style and standards            |
+| [git-workflow.md](./git-workflow.md)                       | Git workflow and commit conventions |
+| [testing.md](./testing.md)                                 | Testing strategy and standards      |
+| [deployment.md](./deployment.md)                           | Deployment solutions and processes  |
 
 ---
 

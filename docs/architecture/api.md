@@ -9,6 +9,7 @@
 Vercel AI SDK and most LLM libraries are tightly coupled with HTTP Responses (Web Streams API). However, in Clean Architecture, **Core Service Layer must not depend on HTTP or View layers**.
 
 We need a unified streaming interface that works for both:
+
 1.  **Next.js API Routes** (HTTP Response Stream)
 2.  **Electron IPC** (Event-based Communication)
 
@@ -23,12 +24,12 @@ Instead of yielding raw strings, we yield structured events to handle text, tool
 ```typescript
 // packages/core/src/types/stream.ts
 
-export type StreamEventType = 
-  | 'text-delta'      // Normal text generation
-  | 'tool-call-start' // Agent is calling a tool
-  | 'tool-call-end'   // Tool execution finished
-  | 'error'           // Something went wrong
-  | 'done';           // Generation complete
+export type StreamEventType =
+  | "text-delta" // Normal text generation
+  | "tool-call-start" // Agent is calling a tool
+  | "tool-call-end" // Tool execution finished
+  | "error" // Something went wrong
+  | "done"; // Generation complete
 
 export interface StreamEvent {
   type: StreamEventType;
@@ -51,23 +52,23 @@ export class ChatService {
     // 2. Call AI Provider (Abstraction)
     const rawStream = await this.ai.chatStream(params.messages);
 
-    let fullResponse = '';
+    let fullResponse = "";
 
     // 3. Process Stream
     for await (const chunk of rawStream) {
       fullResponse += chunk;
-      
+
       // Pass-through to UI
-      yield { type: 'text-delta', payload: chunk };
+      yield { type: "text-delta", payload: chunk };
     }
 
     // 4. Save AI Response (After stream ends)
-    await this.repo.saveMessage({ 
-      role: 'assistant', 
-      content: fullResponse 
+    await this.repo.saveMessage({
+      role: "assistant",
+      content: fullResponse,
     });
-    
-    yield { type: 'done', payload: null };
+
+    yield { type: "done", payload: null };
   }
 }
 ```
@@ -85,7 +86,7 @@ Converts `AsyncGenerator` to `ReadableStream` for HTTP response.
 
 export async function POST(req: Request) {
   const iterator = chatService.sendMessage({ ... });
-  
+
   const stream = new ReadableStream({
     async pull(controller) {
       const { value, done } = await iterator.next();
@@ -111,12 +112,12 @@ Converts `AsyncGenerator` to IPC events.
 ```typescript
 // apps/desktop/src/main/ipc/chat.ts
 
-ipcMain.handle('chat:send', async (event, params) => {
+ipcMain.handle("chat:send", async (event, params) => {
   const iterator = chatService.sendMessage(params);
-  
+
   for await (const eventPayload of iterator) {
     // Send to Renderer via WebContents
-    event.sender.send('chat:stream-chunk', eventPayload);
+    event.sender.send("chat:stream-chunk", eventPayload);
   }
 });
 ```

@@ -6,15 +6,15 @@
 
 ## Document Index
 
-| Document | Description |
-|----------|-------------|
-| [system.md](./system.md) | Overall system architecture design |
-| [database.md](./database.md) | Database schema design |
-| [api.md](./api.md) | API interface design |
-| [message-flow.md](./message-flow.md) | Message processing flow design |
-| [plugin-system.md](./plugin-system.md) | Plugin system architecture design |
-| [agent.md](./agent.md) | Agent system architecture design |
-| [security.md](./security.md) | Security architecture design |
+| Document                                 | Description                           |
+| ---------------------------------------- | ------------------------------------- |
+| [system.md](./system.md)                 | Overall system architecture design    |
+| [database.md](./database.md)             | Database schema design                |
+| [api.md](./api.md)                       | API interface design                  |
+| [message-flow.md](./message-flow.md)     | Message processing flow design        |
+| [plugin-system.md](./plugin-system.md)   | Plugin system architecture design     |
+| [agent.md](./agent.md)                   | Agent system architecture design      |
+| [security.md](./security.md)             | Security architecture design          |
 | [cross-platform.md](./cross-platform.md) | Web/Desktop cross-platform adaptation |
 
 ---
