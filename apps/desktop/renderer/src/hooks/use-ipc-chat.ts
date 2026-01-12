@@ -8,7 +8,6 @@ type ChatStatus = "ready" | "streaming" | "error";
 
 function makeId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (crypto as any).randomUUID() as string;
   }
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -59,9 +58,7 @@ export function useIpcChat(options?: { conversationId?: string; modelId?: string
       const assistantLocalId = current.current.assistantLocalId;
       if (!assistantLocalId) return;
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantLocalId ? { ...m, content: m.content + token } : m,
-        ),
+        prev.map((m) => (m.id === assistantLocalId ? { ...m, content: m.content + token } : m)),
       );
     });
 

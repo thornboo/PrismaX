@@ -24,13 +24,10 @@ app.whenReady().then(() => {
     registerIpc({ userDataPath: app.getPath("userData") });
     createMainWindow();
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Desktop 主进程初始化失败（未知错误）";
+    const message = error instanceof Error ? error.message : "Desktop 主进程初始化失败（未知错误）";
     dialog.showErrorBox(
       "PrismaX Desktop 启动失败",
-      `${message}\n\n如果是 better-sqlite3 ABI 不匹配，请执行：pnpm --filter \"desktop\" rebuild:native`,
+      `${message}\n\n如果是 better-sqlite3 ABI 不匹配，请执行：pnpm --filter "desktop" rebuild:native`,
     );
     app.quit();
   }

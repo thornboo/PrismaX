@@ -6,7 +6,7 @@ import { webSchema } from "@prismax/database";
 import { auth } from "@/lib/auth";
 import { and, asc, eq } from "drizzle-orm";
 
-const { aiProviders, conversations, messages } = webSchema;
+const { messages } = webSchema;
 
 function asFormat(value: string | null): "json" | "md" {
   return value === "md" ? "md" : "json";
@@ -34,11 +34,14 @@ function formatTimestampForFilename(date: Date) {
 }
 
 function sanitizeDisplayPart(input: string) {
-  return input
-    .trim()
-    .slice(0, 40)
-    .replace(/[\u0000-\u001f\u007f]/g, "")
-    .replace(/[\\/:"*?<>|]/g, "_");
+  return (
+    input
+      .trim()
+      .slice(0, 40)
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001f\u007f]/g, "")
+      .replace(/[\\/:"*?<>|]/g, "_")
+  );
 }
 
 function contentDispositionFilename(fallbackFilename: string, utf8Filename: string) {
@@ -48,8 +51,8 @@ function contentDispositionFilename(fallbackFilename: string, utf8Filename: stri
 }
 
 function toMarkdown(
-  conversation: typeof conversations.$inferSelect,
-  rows: Array<typeof messages.$inferSelect>,
+  conversation: typeof webSchema.conversations.$inferSelect,
+  rows: Array<typeof webSchema.messages.$inferSelect>,
 ) {
   const title = conversation.title ?? "未命名会话";
   const lines: string[] = [];
@@ -81,8 +84,7 @@ export async function GET(
   const format = asFormat(url.searchParams.get("format"));
 
   const conversation = await db.query.conversations.findFirst({
-    where: (table) =>
-      and(eq(table.id, conversationId), eq(table.userId, session.user.id)),
+    where: (table) => and(eq(table.id, conversationId), eq(table.userId, session.user.id)),
   });
 
   if (!conversation) {
