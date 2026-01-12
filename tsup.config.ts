@@ -1,0 +1,15 @@
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["electron/main.ts", "electron/preload.ts"],
+  outDir: "electron-dist",
+  format: ["cjs"],
+  sourcemap: true,
+  clean: true,
+  splitting: false,
+  dts: false,
+  external: ["electron", "better-sqlite3"],
+  outExtension() {
+    return { js: ".cjs" };
+  },
+});
