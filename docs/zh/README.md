@@ -2,7 +2,7 @@
 
 > 新一代 AI 聊天助手 - 功能完善、部署灵活、体验优秀
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [English](../../README.md) | [简体中文](./README.md)
 
@@ -18,23 +18,23 @@
 
 ## 部署方式
 
-| 方式 | 说明 | 状态 |
-|------|------|------|
+| 方式     | 说明                    | 状态   |
+| -------- | ----------------------- | ------ |
 | 桌面应用 | Windows / macOS / Linux | 开发中 |
-| Web 服务 | Docker 一键部署 | 开发中 |
-| 移动应用 | iOS / Android | 规划中 |
+| Web 服务 | Docker 一键部署         | 开发中 |
+| 移动应用 | iOS / Android           | 规划中 |
 
 ## 技术栈
 
-| 类别 | 技术 |
-|------|------|
-| 前端框架 | Next.js 15 + React 19 |
-| UI 组件 | shadcn/ui + Radix UI + Tailwind CSS |
-| 状态管理 | Zustand |
-| 桌面框架 | Electron |
-| 后端 | Next.js API Routes + tRPC |
-| 数据库 | PostgreSQL + pgvector / SQLite |
-| 缓存 | Redis |
+| 类别     | 技术                                |
+| -------- | ----------------------------------- |
+| 前端框架 | Next.js 15 + React 19               |
+| UI 组件  | shadcn/ui + Radix UI + Tailwind CSS |
+| 状态管理 | Zustand                             |
+| 桌面框架 | Electron                            |
+| 后端     | Next.js API Routes + tRPC           |
+| 数据库   | PostgreSQL + pgvector / SQLite      |
+| 缓存     | Redis                               |
 
 ## 文档
 
@@ -67,4 +67,4 @@ pnpm dev
 
 ## 许可证
 
-[Apache License 2.0](../../LICENSE)
+[MIT](../../LICENSE)

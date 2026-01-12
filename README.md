@@ -2,7 +2,7 @@
 
 > Next-generation AI chat assistant — Feature-rich, Flexible deployment, Excellent experience
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [English](./README.md) | [简体中文](./docs/zh/README.md)
 
@@ -18,23 +18,23 @@
 
 ## Deployment Options
 
-| Method | Description | Status |
-|--------|-------------|--------|
-| Desktop App | Windows / macOS / Linux | In Development |
+| Method      | Description                 | Status         |
+| ----------- | --------------------------- | -------------- |
+| Desktop App | Windows / macOS / Linux     | In Development |
 | Web Service | Docker one-click deployment | In Development |
-| Mobile App | iOS / Android | Planned |
+| Mobile App  | iOS / Android               | Planned        |
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| Frontend Framework | Next.js 15 + React 19 |
-| UI Components | shadcn/ui + Radix UI + Tailwind CSS |
-| State Management | Zustand |
-| Desktop Framework | Electron |
-| Backend | Next.js API Routes + tRPC |
-| Database | PostgreSQL + pgvector / SQLite |
-| Cache | Redis |
+| Category           | Technology                          |
+| ------------------ | ----------------------------------- |
+| Frontend Framework | Next.js 15 + React 19               |
+| UI Components      | shadcn/ui + Radix UI + Tailwind CSS |
+| State Management   | Zustand                             |
+| Desktop Framework  | Electron                            |
+| Backend            | Next.js API Routes + tRPC           |
+| Database           | PostgreSQL + pgvector / SQLite      |
+| Cache              | Redis                               |
 
 ## Documentation
 
@@ -67,4 +67,4 @@ Contributions are welcome! Please see [Contributing Guide](./CONTRIBUTING.md) fo
 
 ## License
 
-[Apache-2.0](./LICENSE)
+[MIT](./LICENSE)
