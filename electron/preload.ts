@@ -5,8 +5,11 @@ contextBridge.exposeInMainWorld("electron", {
   // 系统相关
   system: {
     getAppVersion: () => ipcRenderer.invoke("system:getAppVersion"),
+    getAppInfo: () => ipcRenderer.invoke("system:getAppInfo"),
     checkUpdate: () => ipcRenderer.invoke("system:checkUpdate"),
     openExternal: (url: string) => ipcRenderer.invoke("system:openExternal", url),
+    openPath: (targetPath: string) => ipcRenderer.invoke("system:openPath", targetPath),
+    selectDirectory: () => ipcRenderer.invoke("system:selectDirectory"),
     minimize: () => ipcRenderer.invoke("system:minimize"),
     close: () => ipcRenderer.invoke("system:close"),
   },
@@ -15,6 +18,7 @@ contextBridge.exposeInMainWorld("electron", {
   chat: {
     send: (input: { conversationId: string; content: string; modelId?: string }) =>
       ipcRenderer.invoke("chat:send", input),
+    cancel: (requestId: string) => ipcRenderer.invoke("chat:cancel", requestId),
     history: (conversationId: string) => ipcRenderer.invoke("chat:history", { conversationId }),
     onToken: (callback: (payload: { requestId: string; token: string }) => void) => {
       const listener = (_event: unknown, payload: { requestId: string; token: string }) =>
@@ -81,6 +85,49 @@ contextBridge.exposeInMainWorld("electron", {
     get: (key: string) => ipcRenderer.invoke("settings:get", key),
     set: (key: string, value: unknown) => ipcRenderer.invoke("settings:set", key, value),
     getAll: () => ipcRenderer.invoke("settings:getAll"),
+  },
+
+  // 数据管理
+  data: {
+    exportConversations: () => ipcRenderer.invoke("data:exportConversations"),
+    exportSettings: () => ipcRenderer.invoke("data:exportSettings"),
+    importConversations: () => ipcRenderer.invoke("data:importConversations"),
+    importSettings: () => ipcRenderer.invoke("data:importSettings"),
+    clearAllConversations: () => ipcRenderer.invoke("data:clearAllConversations"),
+    resetApp: () => ipcRenderer.invoke("data:resetApp"),
+    migrateDataRoot: (targetDir: string) => ipcRenderer.invoke("data:migrateDataRoot", targetDir),
+  },
+
+  // 知识库
+  knowledge: {
+    listBases: () => ipcRenderer.invoke("kb:list"),
+    createBase: (input: { name: string; description?: string | null }) =>
+      ipcRenderer.invoke("kb:create", input),
+    updateBase: (input: {
+      kbId: string;
+      updates: { name?: string; description?: string | null };
+    }) => ipcRenderer.invoke("kb:update", input),
+    deleteBase: (input: { kbId: string; confirmed: boolean }) =>
+      ipcRenderer.invoke("kb:delete", input),
+    getStats: (kbId: string) => ipcRenderer.invoke("kb:getStats", { kbId }),
+    selectFiles: () => ipcRenderer.invoke("kb:selectFiles"),
+    importFiles: (input: { kbId: string; sources: Array<{ type: string; paths: string[] }> }) =>
+      ipcRenderer.invoke("kb:importFiles", input),
+    listJobs: (kbId: string) => ipcRenderer.invoke("kb:listJobs", { kbId }),
+    pauseJob: (input: { kbId: string; jobId: string }) => ipcRenderer.invoke("kb:pauseJob", input),
+    resumeJob: (input: { kbId: string; jobId: string }) =>
+      ipcRenderer.invoke("kb:resumeJob", input),
+    cancelJob: (input: { kbId: string; jobId: string }) =>
+      ipcRenderer.invoke("kb:cancelJob", input),
+    search: (input: { kbId: string; query: string; limit?: number }) =>
+      ipcRenderer.invoke("kb:search", input),
+    createNote: (input: { kbId: string; title: string; content: string }) =>
+      ipcRenderer.invoke("kb:createNote", input),
+    onJobUpdate: (callback: (payload: unknown) => void) => {
+      const listener = (_event: unknown, payload: unknown) => callback(payload);
+      ipcRenderer.on("kb:jobUpdate", listener);
+      return () => ipcRenderer.removeListener("kb:jobUpdate", listener);
+    },
   },
 
   // 事件监听

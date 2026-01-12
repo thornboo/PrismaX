@@ -25,6 +25,10 @@ function getDatabasePath(): string {
   return path.join(userDataPath, "prismax.db");
 }
 
+export function getDatabaseFilePath(): string {
+  return getDatabasePath();
+}
+
 /**
  * 初始化数据库
  * 创建表结构（如果不存在）
@@ -42,6 +46,8 @@ export function initDatabase(): BetterSQLite3Database<typeof schema> {
 
   // 启用 WAL 模式（提高并发性能）
   sqlite.pragma("journal_mode = WAL");
+  // 启用外键约束（确保 ON DELETE CASCADE 生效）
+  sqlite.pragma("foreign_keys = ON");
 
   // 创建 Drizzle 实例
   db = drizzle(sqlite, { schema });
@@ -54,6 +60,16 @@ export function initDatabase(): BetterSQLite3Database<typeof schema> {
 
   console.log("[DB] 数据库初始化完成");
   return db;
+}
+
+export function withSqliteTransaction<T>(fn: () => T): T {
+  if (!sqlite) {
+    initDatabase();
+  }
+  if (!sqlite) {
+    throw new Error("数据库未初始化");
+  }
+  return sqlite.transaction(fn)();
 }
 
 /**
@@ -292,6 +308,27 @@ export function getDatabase(): BetterSQLite3Database<typeof schema> {
     return initDatabase();
   }
   return db;
+}
+
+export function resetDatabaseToDefaults(): void {
+  // 仅重置数据，不删除文件；避免 Windows/macOS 文件占用导致失败。
+  if (!sqlite || !db) {
+    initDatabase();
+  }
+  if (!sqlite || !db) {
+    throw new Error("数据库未初始化");
+  }
+
+  withSqliteTransaction(() => {
+    sqlite!.exec(`DELETE FROM messages;`);
+    sqlite!.exec(`DELETE FROM conversations;`);
+    sqlite!.exec(`DELETE FROM settings;`);
+    sqlite!.exec(`DELETE FROM models;`);
+    sqlite!.exec(`DELETE FROM providers;`);
+  });
+
+  // 重新写入默认数据
+  initDefaultData();
 }
 
 /**

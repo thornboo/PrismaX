@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { Chat } from "./pages/Chat";
-import { Knowledge } from "./pages/Knowledge";
+import { KnowledgeList } from "./pages/KnowledgeList";
+import { KnowledgeBase } from "./pages/KnowledgeBase";
 import { Assistants } from "./pages/Assistants";
 import { Plugins } from "./pages/Plugins";
 import {
@@ -22,7 +23,8 @@ function App() {
         <Route path="/" element={<Layout />}>
           {/* 主页面 */}
           <Route index element={<Chat />} />
-          <Route path="knowledge" element={<Knowledge />} />
+          <Route path="knowledge" element={<KnowledgeList />} />
+          <Route path="knowledge/:kbId" element={<KnowledgeBase />} />
           <Route path="assistants" element={<Assistants />} />
           <Route path="plugins" element={<Plugins />} />
 

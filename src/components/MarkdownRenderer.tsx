@@ -9,7 +9,7 @@
  * - 任务列表
  */
 
-import { useState } from "react";
+import { isValidElement, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -181,8 +181,9 @@ function extractText(children: React.ReactNode): string {
   if (Array.isArray(children)) {
     return children.map(extractText).join("");
   }
-  if (children && typeof children === "object" && "props" in children) {
-    return extractText((children as React.ReactElement).props.children);
+  if (isValidElement(children)) {
+    const props = children.props as { children?: React.ReactNode };
+    return extractText(props.children);
   }
   return "";
 }

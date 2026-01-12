@@ -43,14 +43,56 @@ export interface Model {
   sortOrder: number;
 }
 
+export interface KnowledgeBase {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: number;
+  updatedAt: number;
+  schemaVersion: number;
+  dir: string;
+  metaDbPath: string;
+}
+
+export interface KnowledgeJob {
+  id: string;
+  type: string;
+  status: string;
+  progressCurrent: number;
+  progressTotal: number;
+  errorMessage: string | null;
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+  updatedAt: number;
+  heartbeatAt: number | null;
+}
+
+export interface KnowledgeSearchResult {
+  chunkId: string;
+  documentId: string;
+  documentTitle: string;
+  documentKind: "file" | "note";
+  snippet: string;
+  score: number;
+}
+
 // ============ API 类型 ============
 
 export interface ElectronAPI {
   // 系统相关
   system: {
     getAppVersion: () => Promise<string>;
+    getAppInfo: () => Promise<{
+      appVersion: string;
+      platform: string;
+      userDataPath: string;
+      databaseFilePath: string;
+    }>;
     checkUpdate: () => Promise<{ hasUpdate: boolean; currentVersion: string }>;
     openExternal: (url: string) => Promise<{ success: boolean; error?: string }>;
+    openPath: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
+    selectDirectory: () => Promise<string | null>;
     minimize: () => Promise<void>;
     close: () => Promise<void>;
   };
@@ -61,7 +103,8 @@ export interface ElectronAPI {
       conversationId: string;
       content: string;
       modelId?: string;
-    }) => Promise<{ requestId: string }>;
+    }) => Promise<{ requestId: string; messageId: string }>;
+    cancel: (requestId: string) => Promise<{ success: boolean }>;
     history: (conversationId: string) => Promise<Message[]>;
     onToken: (callback: (payload: { requestId: string; token: string }) => void) => () => void;
     onDone: (callback: (payload: { requestId: string }) => void) => () => void;
@@ -115,6 +158,55 @@ export interface ElectronAPI {
     get: <T = unknown>(key: string) => Promise<T | null>;
     set: (key: string, value: unknown) => Promise<{ success: boolean }>;
     getAll: () => Promise<Record<string, unknown>>;
+  };
+
+  // 数据管理
+  data: {
+    exportConversations: () => Promise<{ filePath: string } | null>;
+    exportSettings: () => Promise<{ filePath: string } | null>;
+    importConversations: () => Promise<{
+      filePath: string;
+      conversationsAdded: number;
+      messagesAdded: number;
+    } | null>;
+    importSettings: () => Promise<{
+      filePath: string;
+      settingsUpdated: number;
+      providersUpdated: number;
+    } | null>;
+    clearAllConversations: () => Promise<{ deletedConversations: number; deletedMessages: number }>;
+    resetApp: () => Promise<{ success: boolean }>;
+    migrateDataRoot: (targetDir: string) => Promise<{ success: boolean }>;
+  };
+
+  // 知识库
+  knowledge: {
+    listBases: () => Promise<KnowledgeBase[]>;
+    createBase: (input: { name: string; description?: string | null }) => Promise<KnowledgeBase>;
+    updateBase: (input: {
+      kbId: string;
+      updates: { name?: string; description?: string | null };
+    }) => Promise<KnowledgeBase>;
+    deleteBase: (input: { kbId: string; confirmed: boolean }) => Promise<{ success: boolean }>;
+    getStats: (kbId: string) => Promise<{ documents: number; chunks: number; jobs: number }>;
+    selectFiles: () => Promise<string[] | null>;
+    importFiles: (input: {
+      kbId: string;
+      sources: Array<{ type: string; paths: string[] }>;
+    }) => Promise<{
+      jobId: string;
+    }>;
+    listJobs: (kbId: string) => Promise<KnowledgeJob[]>;
+    pauseJob: (input: { kbId: string; jobId: string }) => Promise<{ success: boolean }>;
+    resumeJob: (input: { kbId: string; jobId: string }) => Promise<{ success: boolean }>;
+    cancelJob: (input: { kbId: string; jobId: string }) => Promise<{ success: boolean }>;
+    search: (input: { kbId: string; query: string; limit?: number }) => Promise<{
+      results: KnowledgeSearchResult[];
+    }>;
+    createNote: (input: { kbId: string; title: string; content: string }) => Promise<{
+      documentId: string;
+    }>;
+    onJobUpdate: (callback: (payload: unknown) => void) => () => void;
   };
 
   // 事件监听

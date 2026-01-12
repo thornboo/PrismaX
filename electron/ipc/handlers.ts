@@ -5,12 +5,38 @@
  * 原则：main.ts 只负责 wiring，具体逻辑在各 handler 模块中实现
  */
 
-import { ipcMain, app, shell, BrowserWindow } from "electron";
+import fs from "node:fs";
+import path from "node:path";
+import { ipcMain, app, shell, BrowserWindow, dialog } from "electron";
 import * as conversationService from "../services/conversation";
 import * as messageService from "../services/message";
 import * as settingsService from "../services/settings";
 import * as providerService from "../services/provider";
 import * as aiService from "../services/ai";
+import {
+  buildConversationsExport,
+  buildSettingsExport,
+  applySettingsImport,
+  importConversationsAsNew,
+  parseConversationsExport,
+  parseSettingsExport,
+  readJsonFile,
+  writeJsonFile,
+} from "../services/data";
+import {
+  getDatabase,
+  getDatabaseFilePath,
+  resetDatabaseToDefaults,
+  withSqliteTransaction,
+} from "../db";
+import { setConfiguredDataRoot } from "../services/app-data";
+import {
+  createKnowledgeBase,
+  deleteKnowledgeBaseDir,
+  listKnowledgeBases,
+  updateKnowledgeBaseManifest,
+} from "../knowledge/knowledge-base";
+import { getKnowledgeWorkerClient } from "../knowledge/worker-client";
 import type { CoreMessage } from "ai";
 
 /**
@@ -29,6 +55,12 @@ export function registerIpcHandlers(): void {
   // ============ Provider Handlers ============
   registerProviderHandlers();
 
+  // ============ Data Management Handlers ============
+  registerDataHandlers();
+
+  // ============ Knowledge Base Handlers ============
+  registerKnowledgeBaseHandlers();
+
   // ============ Chat Handlers (Stub) ============
   registerChatHandlers();
 }
@@ -40,6 +72,16 @@ function registerSystemHandlers(): void {
   // 获取应用版本
   ipcMain.handle("system:getAppVersion", () => {
     return app.getVersion();
+  });
+
+  // 获取应用路径与数据路径信息
+  ipcMain.handle("system:getAppInfo", () => {
+    return {
+      appVersion: app.getVersion(),
+      platform: process.platform,
+      userDataPath: app.getPath("userData"),
+      databaseFilePath: getDatabaseFilePath(),
+    };
   });
 
   // 检查更新（暂时返回无更新）
@@ -65,6 +107,31 @@ function registerSystemHandlers(): void {
     }
   });
 
+  // 打开本地路径（文件夹/文件），用于数据目录等
+  ipcMain.handle("system:openPath", async (_event, targetPath: string) => {
+    try {
+      const result = await shell.openPath(targetPath);
+      if (result) {
+        return { success: false, error: result };
+      }
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "打开路径失败";
+      return { success: false, error: message };
+    }
+  });
+
+  // 选择目录（用户交互式）
+  ipcMain.handle("system:selectDirectory", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+    return filePaths[0];
+  });
+
   // 最小化窗口
   ipcMain.handle("system:minimize", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
@@ -75,6 +142,147 @@ function registerSystemHandlers(): void {
   ipcMain.handle("system:close", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     win?.close();
+  });
+}
+
+function formatDateForFileName(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+}
+
+/**
+ * 数据管理相关 handlers
+ *
+ * 说明：
+ * - 仅处理用户显式触发的导入/导出/清理/重置等能力
+ * - API Key 不参与设置导出（避免敏感数据外泄）
+ */
+function registerDataHandlers(): void {
+  ipcMain.handle("data:exportConversations", async () => {
+    const now = new Date();
+    const defaultPath = path.join(
+      app.getPath("downloads"),
+      `prismax-conversations-${formatDateForFileName(now)}.json`,
+    );
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: "导出会话",
+      defaultPath,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (canceled || !filePath) {
+      return null;
+    }
+
+    const db = getDatabase();
+    const payload = buildConversationsExport(db);
+    await writeJsonFile(filePath, payload);
+    return { filePath };
+  });
+
+  ipcMain.handle("data:exportSettings", async () => {
+    const now = new Date();
+    const defaultPath = path.join(
+      app.getPath("downloads"),
+      `prismax-settings-${formatDateForFileName(now)}.json`,
+    );
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: "导出设置",
+      defaultPath,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (canceled || !filePath) {
+      return null;
+    }
+
+    const settings = settingsService.getAllSettings();
+    const providers = providerService
+      .getAllProviders()
+      .map(({ id, name, baseUrl, enabled }) => ({ id, name, baseUrl, enabled }));
+
+    const db = getDatabase();
+    const payload = buildSettingsExport(db, { settings, providers });
+    await writeJsonFile(filePath, payload);
+    return { filePath };
+  });
+
+  ipcMain.handle("data:importConversations", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: "导入会话",
+      properties: ["openFile"],
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+
+    const content = await readJsonFile(filePaths[0]);
+    const parsed = parseConversationsExport(content);
+
+    const db = getDatabase();
+    const result = withSqliteTransaction(() => importConversationsAsNew(db, parsed));
+
+    return { filePath: filePaths[0], ...result };
+  });
+
+  ipcMain.handle("data:importSettings", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: "导入设置",
+      properties: ["openFile"],
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+
+    const content = await readJsonFile(filePaths[0]);
+    const parsed = parseSettingsExport(content);
+
+    const db = getDatabase();
+    const result = withSqliteTransaction(() => applySettingsImport(db, parsed));
+
+    return { filePath: filePaths[0], ...result };
+  });
+
+  ipcMain.handle("data:clearAllConversations", async () => {
+    const db = getDatabase();
+    const cleared = withSqliteTransaction(() => {
+      // 明确先删 messages，再删 conversations，避免外键未启用时残留孤儿数据
+      const deletedMessages = db.delete(schema.messages).run().changes;
+      const deletedConversations = db.delete(schema.conversations).run().changes;
+      return { deletedConversations, deletedMessages };
+    });
+    return cleared;
+  });
+
+  ipcMain.handle("data:resetApp", async () => {
+    resetDatabaseToDefaults();
+    return { success: true };
+  });
+
+  ipcMain.handle("data:migrateDataRoot", async (_event, targetDir: string) => {
+    const current = app.getPath("userData");
+    const resolvedTarget = path.resolve(targetDir);
+    const resolvedCurrent = path.resolve(current);
+
+    if (resolvedTarget === resolvedCurrent) {
+      throw new Error("目标目录与当前数据目录相同");
+    }
+
+    await fs.promises.mkdir(resolvedTarget, { recursive: true });
+    const entries = await fs.promises.readdir(resolvedTarget);
+    if (entries.length > 0) {
+      throw new Error("目标目录非空，请选择一个空目录");
+    }
+
+    await fs.promises.cp(resolvedCurrent, resolvedTarget, { recursive: true });
+
+    setConfiguredDataRoot(resolvedTarget);
+
+    // 重启应用以应用新的 userDataPath
+    app.relaunch();
+    app.exit(0);
+
+    return { success: true };
   });
 }
 
@@ -269,4 +477,120 @@ function registerChatHandlers(): void {
   ipcMain.handle("chat:history", (_event, input: { conversationId: string }) => {
     return messageService.getMessages(input.conversationId);
   });
+}
+
+let knowledgeWorkerWired = false;
+function getKnowledgeWorker() {
+  const client = getKnowledgeWorkerClient(app.getPath("userData"));
+  if (!knowledgeWorkerWired) {
+    knowledgeWorkerWired = true;
+    client.onEvent((event) => {
+      if (event.event === "job:update") {
+        for (const win of BrowserWindow.getAllWindows()) {
+          try {
+            win.webContents.send("kb:jobUpdate", event.payload);
+          } catch {
+            // ignore
+          }
+        }
+      }
+    });
+  }
+  return client;
+}
+
+function registerKnowledgeBaseHandlers(): void {
+  ipcMain.handle("kb:list", () => {
+    return listKnowledgeBases();
+  });
+
+  ipcMain.handle("kb:create", (_event, input: { name: string; description?: string | null }) => {
+    return createKnowledgeBase(input);
+  });
+
+  ipcMain.handle(
+    "kb:update",
+    (_event, input: { kbId: string; updates: { name?: string; description?: string | null } }) => {
+      return updateKnowledgeBaseManifest(input.kbId, input.updates);
+    },
+  );
+
+  ipcMain.handle("kb:delete", async (_event, input: { kbId: string; confirmed: boolean }) => {
+    // 安全：存在未结束任务时不允许删除（避免中途删除导致数据不一致）
+    const worker = getKnowledgeWorker();
+    const jobs = await worker.call<any[]>("kb.listJobs", { kbId: input.kbId });
+    const hasActive = jobs.some((j) =>
+      ["pending", "processing", "paused"].includes(String(j.status)),
+    );
+    if (hasActive) {
+      throw new Error("存在未完成的导入任务，请先取消/完成任务后再删除知识库");
+    }
+
+    deleteKnowledgeBaseDir({ kbId: input.kbId, confirmed: input.confirmed });
+    return { success: true };
+  });
+
+  ipcMain.handle("kb:getStats", async (_event, input: { kbId: string }) => {
+    const worker = getKnowledgeWorker();
+    return worker.call("kb.getStats", { kbId: input.kbId });
+  });
+
+  ipcMain.handle("kb:selectFiles", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: "选择要导入的文件",
+      properties: ["openFile", "multiSelections"],
+    });
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+    return filePaths;
+  });
+
+  ipcMain.handle(
+    "kb:importFiles",
+    async (_event, input: { kbId: string; sources: Array<{ type: string; paths: string[] }> }) => {
+      const worker = getKnowledgeWorker();
+      return worker.call(
+        "kb.importFiles",
+        { kbId: input.kbId, sources: input.sources },
+        5 * 60_000,
+      );
+    },
+  );
+
+  ipcMain.handle("kb:listJobs", async (_event, input: { kbId: string }) => {
+    const worker = getKnowledgeWorker();
+    return worker.call("kb.listJobs", { kbId: input.kbId });
+  });
+
+  ipcMain.handle("kb:pauseJob", async (_event, input: { kbId: string; jobId: string }) => {
+    const worker = getKnowledgeWorker();
+    return worker.call("kb.pauseJob", input);
+  });
+
+  ipcMain.handle("kb:resumeJob", async (_event, input: { kbId: string; jobId: string }) => {
+    const worker = getKnowledgeWorker();
+    return worker.call("kb.resumeJob", input);
+  });
+
+  ipcMain.handle("kb:cancelJob", async (_event, input: { kbId: string; jobId: string }) => {
+    const worker = getKnowledgeWorker();
+    return worker.call("kb.cancelJob", input);
+  });
+
+  ipcMain.handle(
+    "kb:search",
+    async (_event, input: { kbId: string; query: string; limit?: number }) => {
+      const worker = getKnowledgeWorker();
+      return worker.call("kb.search", input);
+    },
+  );
+
+  ipcMain.handle(
+    "kb:createNote",
+    async (_event, input: { kbId: string; title: string; content: string }) => {
+      const worker = getKnowledgeWorker();
+      return worker.call("kb.createNote", input);
+    },
+  );
 }

@@ -21,7 +21,7 @@
   },
 
   "asar": true,
-  "asarUnpack": ["node_modules/better-sqlite3/**/*"],
+  "asarUnpack": ["node_modules/better-sqlite3/**/*", "electron-dist/knowledge/kb-worker.cjs"],
 
   "mac": {
     "category": "public.app-category.productivity",

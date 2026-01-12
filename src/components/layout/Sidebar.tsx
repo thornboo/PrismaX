@@ -11,7 +11,6 @@ import {
   Puzzle,
   Trash2,
   Pin,
-  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useConversationStore } from "@/stores";

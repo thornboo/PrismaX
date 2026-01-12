@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Square, Loader2, Copy, Check, Pencil, Trash2, RefreshCw, X } from "lucide-react";
+import { Send, Square, Loader2, Copy, Check, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useConversationStore } from "@/stores";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
@@ -134,8 +134,12 @@ export function Chat() {
   // 停止生成
   const handleStop = async () => {
     if (currentRequestId) {
-      setIsGenerating(false);
-      setCurrentRequestId(null);
+      try {
+        await window.electron.chat.cancel(currentRequestId);
+      } finally {
+        setIsGenerating(false);
+        setCurrentRequestId(null);
+      }
     }
   };
 

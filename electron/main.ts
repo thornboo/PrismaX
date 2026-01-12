@@ -2,6 +2,7 @@ import path from "node:path";
 import { app, BrowserWindow, dialog, Tray, Menu, nativeImage } from "electron";
 import { registerIpcHandlers } from "./ipc";
 import { initDatabase, closeDatabase } from "./db";
+import { applyUserDataPathEarly } from "./services/app-data";
 
 // 开发服务器端口 - 与 vite.config.ts 保持一致
 const DEV_SERVER_PORT = 3000;
@@ -119,6 +120,9 @@ declare module "electron" {
     isQuitting?: boolean;
   }
 }
+
+// 在 app 初始化前应用用户配置的数据目录
+applyUserDataPathEarly();
 
 app.whenReady().then(() => {
   try {
